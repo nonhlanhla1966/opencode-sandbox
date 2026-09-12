@@ -12,7 +12,9 @@ jobs:
       contains(github.event.comment.body, '/opencode')
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       id-token: write
+      issues: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
