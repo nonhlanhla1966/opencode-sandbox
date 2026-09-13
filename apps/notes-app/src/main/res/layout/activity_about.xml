@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/screen_background"
+    android:gravity="center_horizontal"
+    android:paddingLeft="24dp"
+    android:paddingRight="24dp">
+
+    <TextView
+        android:id="@+id/aboutTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="72dp"
+        android:textColor="@color/primary"
+        android:textSize="26sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/versionLine"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:textColor="@color/text_secondary"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/aboutBody"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="28dp"
+        android:gravity="center"
+        android:lineSpacingMultiplier="1.3"
+        android:textColor="@color/text_secondary"
+        android:textSize="15sp" />
+
+    <Button
+        android:id="@+id/aboutBack"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="32dp"
+        android:background="@drawable/primary_button_bg"
+        android:text="@string/about_back"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp" />
+</LinearLayout>

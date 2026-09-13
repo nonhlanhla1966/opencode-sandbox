@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Notes</string>
+    <string name="screen_title">Notes</string>
+    <string name="notes_count_format">%1$d note(s)</string>
+    <string name="search_hint">Search notes</string>
+    <string name="search_label">Search notes</string>
+    <string name="add_note">New note</string>
+    <string name="add_note_desc">Write a new note</string>
+    <string name="empty_no_notes">No notes yet\nTap + to write your first one.</string>
+    <string name="empty_home">No notes yet\nTap + to write your first one.</string>
+    <string name="empty_search">No notes match “%1$s”.</string>
+    <string name="no_body_hint">Empty note</string>
+    <string name="note_title_hint">Title</string>
+    <string name="note_body_hint">Write your note…</string>
+    <string name="delete_button">Delete</string>
+    <string name="delete_desc">Delete this note</string>
+    <string name="delete_title">Delete note?</string>
+    <string name="delete_message">This cannot be undone.</string>
+    <string name="delete_confirm">Delete</string>
+    <string name="delete_cancel">Cancel</string>
+    <string name="empty_note_ignored">Empty notes are not saved</string>
+    <string name="note_missing">This note no longer exists</string>
+    <string name="deleted_toast">Note deleted</string>
+    <string name="about_button">About</string>
+    <string name="about_title">About</string>
+    <string name="about_back">Back</string>
+    <string name="about_body">%1$s is a lightweight, fully offline notes app.\n\nCreate, edit, search and delete notes stored privately on your device. No account, no network, no data leaves the phone.</string>
+    <string name="about_version_format">Version %1$s</string>
+    <string name="ic_launcher_desc">Notes app launcher icon</string>
+</resources>
