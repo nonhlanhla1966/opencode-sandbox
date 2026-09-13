@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">One-Button Hello World</string>
+    <string name="hello_button">Say hello</string>
+    <string name="hint">One button. Go.</string>
+</resources>
