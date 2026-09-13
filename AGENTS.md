@@ -101,12 +101,12 @@ Commits pushed with the workflow token do NOT fire `on: push` workflows
 build pipeline (the `gh` CLI falls back to `GITHUB_TOKEN` when `GH_TOKEN` is
 unset — use the same token, never print it):
 ```
-gh workflow run appfactory-build.yml --repo "${GITHUB_REPOSITORY}" \
+gh workflow run build.yml --repo "${GITHUB_REPOSITORY}" \
   --ref main -f app=<slug>
 ```
 Confirm it actually started:
 ```
-gh run list --workflow=appfactory-build.yml --limit 5
+gh run list --workflow=build.yml --limit 5
 ```
 If the dispatch fails, retry (up to 3 times) before moving on. Do NOT create a
 GitHub Release — `build.yml` does that and will post `DOWNLOAD_READY` on the
@@ -130,6 +130,7 @@ present on the runner. Use them; do not hand-wave.
 - `validate-app.sh` passes; unit tests pass.
 - `release.json` written with issue number and request.
 - Committed and pushed to `main`.
-- `build.yml` dispatched via `gh workflow run` and confirmed running (so CI
-  fires even though the token-pushed commit does not trigger `on: push`).
+- `build.yml` (the file is `.github/workflows/build.yml`) dispatched via
+  `gh workflow run build.yml` and confirmed running (so CI fires even though
+  the token-pushed commit does not trigger `on: push`).
 - Stated clearly that a release link will follow from CI.

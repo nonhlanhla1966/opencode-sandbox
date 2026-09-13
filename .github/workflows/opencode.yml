@@ -52,9 +52,9 @@ jobs:
 
             AFTER pushing, trigger CI explicitly (GITHUB_TOKEN pushes do NOT
             fire the push-triggered build workflow):
-            gh workflow run appfactory-build.yml --repo ${GITHUB_REPOSITORY} \
+            gh workflow run build.yml --repo ${GITHUB_REPOSITORY} \
               --ref main -f app=<slug>
-            then confirm with gh run list --workflow=appfactory-build.yml.
+            then confirm with gh run list --workflow=build.yml.
             Do not create the GitHub Release yourself.
 
             Rules: never expose secrets; do NOT create hand-made branches or
