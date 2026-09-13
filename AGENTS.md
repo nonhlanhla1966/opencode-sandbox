@@ -95,6 +95,23 @@ git push origin main
 Confirm the push actually succeeded (`git fetch origin main` or `git status`
 shows you are up to date) before moving on.
 
+### 6.5 CI_TRIGGER
+Commits pushed with the workflow token do NOT fire `on: push` workflows
+(GitHub anti-recursion), so after a successful push explicitly dispatch the
+build pipeline (the `gh` CLI falls back to `GITHUB_TOKEN` when `GH_TOKEN` is
+unset — use the same token, never print it):
+```
+gh workflow run appfactory-build.yml --repo "${GITHUB_REPOSITORY}" \
+  --ref main -f app=<slug>
+```
+Confirm it actually started:
+```
+gh run list --workflow=appfactory-build.yml --limit 5
+```
+If the dispatch fails, retry (up to 3 times) before moving on. Do NOT create a
+GitHub Release — `build.yml` does that and will post `DOWNLOAD_READY` on the
+issue.
+
 ### 7. Final comment
 Post a concise completion comment on the issue: app name, `apps/<slug>`, what
 was implemented (screens/nav), that CI (`build.yml`) is now building/verifying
@@ -103,8 +120,9 @@ exhausted all 3 retries, post an honest failure summary with the exact error
 and stop.
 
 ## Tools available to you
-Normal shell, `git`, GitHub CLI (`gh`) authenticated with the workflow token,
-and Android SDK tooling if present on the runner. Use them; do not hand-wave.
+Normal shell, `git`, GitHub CLI (`gh`) authenticated with the workflow token
+(`GITHUB_TOKEN` env, used as `GH_TOKEN` fallback), and Android SDK tooling if
+present on the runner. Use them; do not hand-wave.
 
 ## Definition of done
 - `DESIGN.md` exists and covers all five required areas.
@@ -112,4 +130,6 @@ and Android SDK tooling if present on the runner. Use them; do not hand-wave.
 - `validate-app.sh` passes; unit tests pass.
 - `release.json` written with issue number and request.
 - Committed and pushed to `main`.
+- `build.yml` dispatched via `gh workflow run` and confirmed running (so CI
+  fires even though the token-pushed commit does not trigger `on: push`).
 - Stated clearly that a release link will follow from CI.

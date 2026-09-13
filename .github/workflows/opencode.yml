@@ -20,6 +20,8 @@ jobs:
       contents: write
       issues: write
       id-token: write
+      pull-requests: write
+      actions: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -48,8 +50,15 @@ jobs:
             with bash scripts/validate-app.sh apps/<slug>, WRITE release.json
             with the issue number and request, then commit and push to main.
 
-            Rules: never expose secrets; do NOT create branches or PRs; do NOT
-            create GitHub Releases (CI does that); repair failures and retry up
-            to 3 times; push through git using the provided GITHUB_TOKEN. End
+            AFTER pushing, trigger CI explicitly (GITHUB_TOKEN pushes do NOT
+            fire the push-triggered build workflow):
+            gh workflow run appfactory-build.yml --repo ${GITHUB_REPOSITORY} \
+              --ref main -f app=<slug>
+            then confirm with gh run list --workflow=appfactory-build.yml.
+            Do not create the GitHub Release yourself.
+
+            Rules: never expose secrets; do NOT create hand-made branches or
+            Releases (CI does that); repair failures and retry up to 3 times;
+            push through git using the provided GITHUB_TOKEN. End
             with a concise completion comment naming the app and confirming CI
             will publish the APK download link here.
