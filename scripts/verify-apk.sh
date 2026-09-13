@@ -32,8 +32,8 @@ fi
 
 echo "$badging" | grep -E "^package:|launchable-activity|application-label|sdkVersion|targetSdkVersion" || true
 
-pkg=$(echo "$badging" | sed -n "s/.*name='\([^']*\)'.*/\1/p" | head -1)
-ver=$(echo "$badging" | sed -n "s/.*versionName='\([^']*\)'.*/\1/p" | head -1)
+pkg=$(echo "$badging" | grep -o "package: name='[^']*'" | head -1 | sed "s/package: name='//;s/'//")
+ver=$(echo "$badging" | grep -o "versionName='[^']*'" | head -1 | sed "s/versionName='//;s/'//")
 launch=$(echo "$badging" | grep -c "launchable-activity:")
 
 fail=0
