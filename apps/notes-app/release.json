@@ -1,5 +1,5 @@
 {
   "app": "notes-app",
-  "issue": 0,
-  "request": "Build a lightweight offline notes app with a clean modern design: create, edit, delete, search, and local persistence"
+  "issue": 4,
+  "request": "Build a lightweight offline notes app with a clean modern design, note creation/editing/deletion, search, and local persistence."
 }

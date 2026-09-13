@@ -102,30 +102,21 @@ public final class HomeActivity extends Activity {
     }
 
     private void reload() {
-        List<Note> found = query.trim().isEmpty()
-                ? store.listAll()
-                : store.search(query);
+        String q = query == null ? "" : query.trim();
+        List<Note> found = q.isEmpty() ? store.listAll() : store.search(q);
         notes.clear();
         notes.addAll(found);
         adapter.notifyDataSetChanged();
 
-        boolean hasMatches = query.trim().isEmpty()
-                ? !store.listAll().isEmpty()
-                : !found.isEmpty() || true;
-        boolean noQuery = query.trim().isEmpty();
-        boolean empty = noQuery ? notes.isEmpty() : found.isEmpty();
+        boolean empty = notes.isEmpty();
         emptyText.setText(empty
-                ? (noQuery ? R.string.empty_home : R.string.empty_search)
-                : 0);
+                ? (q.isEmpty()
+                    ? getString(R.string.empty_home)
+                    : getString(R.string.empty_search, q))
+                : "");
         emptyText.setVisibility(empty ? View.VISIBLE : View.GONE);
         notesCount.setText(getString(R.string.notes_count_format, notes.size()));
     }
 
     private ArrayAdapter<Note> adapter;
-
-    private static final class NoteAdapter extends ArrayAdapter<Note> {
-        NoteAdapter(Activity a) {
-            super(a, 0);
-        }
-    }
 }
