@@ -82,8 +82,18 @@ pass. Repair and retry up to 3 times.
 
 ### 6. GITHUB_PUSH
 Commit design + code together with `Apps built by the AppFactory engine
-(<issue_number>)` in the message body and push to `main`:
-`git push origin main`. Confirm the push actually succeeded before moving on.
+(<issue_number>)` in the message body and push to `main`. The runner does not
+persist git credentials, so authenticate explicitly with the workflow token
+(never print or echo it):
+```
+git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+git add -A
+git -c user.name="opencode-agent" -c user.email="opencode-agent[bot]@users.noreply.github.com" \
+  commit -m "Add <slug>: <short spec> (issue #<n>)"
+git push origin main
+```
+Confirm the push actually succeeded (`git fetch origin main` or `git status`
+shows you are up to date) before moving on.
 
 ### 7. Final comment
 Post a concise completion comment on the issue: app name, `apps/<slug>`, what
