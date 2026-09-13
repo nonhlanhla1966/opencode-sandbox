@@ -106,7 +106,7 @@ public final class HomeActivity extends Activity {
                 ? store.listAll()
                 : store.search(query);
         notes.clear();
-        notes.addAll(found opera);
+        notes.addAll(found);
         adapter.notifyDataSetChanged();
 
         boolean hasMatches = query.trim().isEmpty()
