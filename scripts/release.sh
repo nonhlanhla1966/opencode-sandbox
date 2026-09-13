@@ -17,8 +17,8 @@ title="[AppFactory] $slug — latest debug build"
 [ -f "$apk" ] || { echo "release: APK not found: $apk" >&2; exit 1; }
 
 apk_name="$(basename "$apk")"
-checksums="$(mktemp)"
-sha256sum "$apk" | tee "$checksums"
+checksums_dir="$(mktemp -d)"
+sha256sum "$apk" | tee "$checksums_dir/SHA256SUMS"
 
 echo "release: publishing release $tag"
 # Idempotent: remove any previous run of this rolling release (tag included).
@@ -29,7 +29,7 @@ fi
 notes="Built and verified by the AppFactory pipeline for **$slug**. Debug-signed APK (installable), SHA-256 in *SHA256SUMS*."
 if ! gh release create "$tag" --repo "$repo" --target "$sha" \
      --title "$title" --notes "$notes" \
-     -- "$apk" "$checksums#SHA256SUMS"; then
+     -- "$apk" "$checksums_dir/SHA256SUMS"; then
   echo "release: create failed" >&2
   exit 1
 fi
