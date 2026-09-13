@@ -41,7 +41,7 @@ public final class HomeActivity extends Activity {
         noteList = findViewById(R.id.noteList);
         emptyText = findViewById(R.id.emptyText);
         notesCount = findViewById(R.id.notesCount);
-        searchField = findViewById(R.id.searchFieldapse);
+        searchField = findViewById(R.id.searchField);
 
         adapter = new ArrayAdapter<Note>(this, R.layout.item_note, notes) {
             @Override
