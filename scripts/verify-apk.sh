@@ -7,8 +7,18 @@ apk="${1:?usage: verify-apk.sh <apk> <applicationId> [versionName]}"
 expected_id="${2:?applicationId required}"
 expected_ver="${3:-}"
 
-aapt=$(command -v aapt || command -v aapt2)
-[ -n "$aapt" ] || { echo "verify-apk: aapt/aapt2 not found"; exit 1; }
+aapt=""
+for c in aapt aapt2; do
+  p="$(command -v "$c" 2>/dev/null || true)"
+  [ -n "$p" ] && aapt="$p" && break
+done
+if [ -z "$aapt" ] && [ -n "${ANDROID_HOME:-}" ]; then
+  for d in "$ANDROID_HOME"/build-tools/*/; do
+    if [ -x "${d}aapt" ]; then aapt="${d}aapt"; break; fi
+    if [ -x "${d}aapt2" ]; then aapt="${d}aapt2"; break; fi
+  done
+fi
+[ -n "$aapt" ] || { echo "verify-apk: aapt/aapt2 not found (PATH or \$ANDROID_HOME/build-tools)"; exit 1; }
 
 [ -f "$apk" ] || { echo "verify-apk: missing APK: $apk"; exit 1; }
 [ -s "$apk" ] || { echo "verify-apk: empty APK: $apk"; exit 1; }

@@ -71,21 +71,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
+          rows_file="$(mktemp)"
+          for app in $APPS; do
+            apk="apps/$app/build/outputs/apk/debug/app-debug.apk"
+            appid=$(sed -n "s/.*applicationId[[:space:]]*[\"']\([^\"']*\)[\"'].*/\1/p" "apps/$app/build.gradle" | head -1)
+            ver=$(sed -n "s/.*versionName[[:space:]]*[\"']\([^\"']*\)[\"'].*/\1/p" "apps/$app/build.gradle" | head -1)
+            issue=$(python3 -c "import json;print(json.load(open('apps/$app/release.json')).get('issue') or 0)" 2>/dev/null || echo 0)
+            echo "== VERIFY $app (id=$appid ver=${ver:-?} issue=${issue:-0})"
+            bash scripts/retry.sh 3 bash scripts/verify-apk.sh "$apk" "$appid" "${ver:-}"
+            url=$(bash scripts/release.sh "apps/$app" | sed -n 's/^release-url=//p')
+            echo "== RELEASED $app -> $url"
+            echo "$app|$issue|$url" >> "$rows_file"
+          done
           {
             echo "release_rows<<APPFACTORY_EOF"
-            for app in $APPS; do
-              apk="apps/$app/build/outputs/apk/debug/app-debug.apk"
-              appid=$(sed -n "s/.*applicationId[[:space:]]*[\"']\([^\"']*\)[\"'].*/\1/p" "apps/$app/build.gradle" | head -1)
-              ver=$(sed -n "s/.*versionName[[:space:]]*[\"']\([^\"']*\)[\"'].*/\1/p" "apps/$app/build.gradle" | head -1)
-              issue=$(python3 -c "import json;print(json.load(open('apps/$app/release.json')).get('issue') or 0)" 2>/dev/null || echo 0)
-              echo "== VERIFY $app (id=$appid ver=${ver:-?}) issue=${issue:-0}"
-              bash scripts/retry.sh 3 bash scripts/verify-apk.sh "$apk" "$appid" "${ver:-}"
-              url=$(bash scripts/release.sh "apps/$app" | sed -n 's/^release-url=//p')
-              echo "== RELEASED $app -> $url"
-              echo "$app|$issue|$url"
-            done
+            cat "$rows_file"
             echo "APPFACTORY_EOF"
           } >> "$GITHUB_OUTPUT"
+          rm -f "$rows_file"
 
       - name: Post DOWNLOAD_READY on requesting issues
         if: always()
