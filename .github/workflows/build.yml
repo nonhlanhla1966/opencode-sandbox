@@ -73,7 +73,7 @@ jobs:
         run: |
           rows_file="$(mktemp)"
           for app in $APPS; do
-            apk="apps/$app/build/outputs/apk/debug/app-debug.apk"
+            apk="$(bash scripts/find-apk.sh "apps/$app")"
             appid=$(sed -n "s/.*applicationId[[:space:]]*[\"']\([^\"']*\)[\"'].*/\1/p" "apps/$app/build.gradle" | head -1)
             ver=$(sed -n "s/.*versionName[[:space:]]*[\"']\([^\"']*\)[\"'].*/\1/p" "apps/$app/build.gradle" | head -1)
             issue=$(python3 -c "import json;print(json.load(open('apps/$app/release.json')).get('issue') or 0)" 2>/dev/null || echo 0)
@@ -114,7 +114,7 @@ jobs:
           {
             echo "## AppFactory build result"
             echo ""
-for app in $APPS; do
+            for app in $APPS; do
               apk="$(bash scripts/find-apk.sh "apps/$app")"
               if [ -n "$apk" ] && [ -f "$apk" ]; then
                 sz=$(du -h "$apk" | cut -f1)
