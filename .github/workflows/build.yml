@@ -114,11 +114,12 @@ jobs:
           {
             echo "## AppFactory build result"
             echo ""
-            for app in $APPS; do
-              apk="apps/$app/build/outputs/apk/debug/app-debug.apk"
-              if [ -f "$apk" ]; then
+for app in $APPS; do
+              apk="$(bash scripts/find-apk.sh "apps/$app")"
+              if [ -n "$apk" ] && [ -f "$apk" ]; then
                 sz=$(du -h "$apk" | cut -f1)
-                echo "- **$app**: APK OK ($sz) — release: https://github.com/${{ github.repository }}/releases/download/app-$app-latest/app-debug.apk"
+                apk_name="$(basename "$apk")"
+                echo "- **$app**: APK OK ($sz) — release: https://github.com/${{ github.repository }}/releases/download/app-$app-latest/$apk_name"
               else
                 echo "- **$app**: NO APK"
               fi

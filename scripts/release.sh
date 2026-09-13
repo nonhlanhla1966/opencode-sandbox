@@ -10,7 +10,7 @@ repo="${GITHUB_REPOSITORY:?GITHUB_REPOSITORY required}"
 sha="${GITHUB_SHA:?GITHUB_SHA required}"
 
 slug="$(basename "$app_dir")"
-apk="$app_dir/build/outputs/apk/debug/app-debug.apk"
+apk="$(bash "$(dirname "$0")/find-apk.sh" "$app_dir")"
 tag="app-$slug-latest"
 title="[AppFactory] $slug — latest debug build"
 
