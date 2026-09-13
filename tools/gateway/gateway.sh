@@ -95,7 +95,9 @@ AppFactory - build me: ${idea}
 Slug: ${slug}
 EOF
 )"
-  issue="$(gh issue create -R "$r" --title "$title" --body "$body" --json number --jq .number 2>/dev/null || true)"
+  issue="$(gh issue create -R "$r" --title "$title" --body "$body" 2>&1 \
+    | grep -oE 'https://github.com/[^/]+/[^/]+/issues/[0-9]+' \
+    | grep -oE '[0-9]+$' | head -1 || true)"
   [ -n "$issue" ] || die "failed to create issue (check GITHUB_TOKEN auth)"
   run_comment_trigger "$r" "$issue" "$idea"
   ok "\"slug\":$(json_esc "$slug"),\"application_id\":$(json_esc "com.appfactory.$slug"),\"issue\":$issue,\"status\":\"request_created\",\"issue_url\":$(json_esc "https://github.com/$r/issues/$issue")"
