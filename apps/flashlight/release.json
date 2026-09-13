@@ -1,0 +1,5 @@
+{
+  "app": "flashlight",
+  "issue": 3,
+  "request": "A simple flashlight app: one big button toggles the phone's camera LED on and off. Single screen, works offline, minimal UI."
+}

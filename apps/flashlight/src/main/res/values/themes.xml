@@ -1,0 +1,10 @@
+<resources>
+    <style name="Theme.AppFactory" parent="android:Theme.Material">
+        <item name="android:colorPrimary">@color/button_on_fill</item>
+        <item name="android:colorPrimaryDark">@color/screen_background</item>
+        <item name="android:colorAccent">@color/button_on_fill</item>
+        <item name="android:windowBackground">@color/screen_background</item>
+        <item name="android:statusBarColor">@color/screen_background</item>
+        <item name="android:navigationBarColor">@color/screen_background</item>
+    </style>
+</resources>
