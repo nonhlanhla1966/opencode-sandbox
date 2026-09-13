@@ -40,7 +40,10 @@ o2="$(bash "$GW" create_app_request '' 2>/dev/null || true)"
 printf '%s' "$o2" | python3 -c 'import json,sys;json.load(sys.stdin)' && t "empty-idea is valid JSON" || f "empty-idea not JSON: $o2"
 
 echo "== 4. secret-safety invariant: output never contains a token-like value =="
-seen="$(bash "$GW" get_build_status 'x' 2>&1 | grep -icE 'x-access-token|ghp_[A-Za-z0-9]|gho_|github_pat_|aaaa[a-z]{6,}|[0-9]{20,}' || true)"
+# Bounded (15s): get_build_status touches live gh, which may hang on flaky CI
+# networks; the invariant check matters, not the speed.
+o4="$(timeout 15 bash "$GW" get_build_status 'x' 2>&1 || true)"
+seen="$(printf '%s' "$o4" | grep -icE 'x-access-token|ghp_[A-Za-z0-9]|gho_|github_pat_|aaaa[a-z]{6,}|[0-9]{20,}' || true)"
 [ "$seen" -eq 0 ] && t "no token-shaped strings in output" || f "token-shaped string leaked ($seen)"
 
 echo "== 5. command dispatch table covers the 3 documented ops =="
