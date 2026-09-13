@@ -52,7 +52,7 @@ jobs:
           echo "apps=[$APPS]"
           echo "APPS=$APPS" >> "$GITHUB_ENV"
 
-      - name: Test apps (JVM unit tests — repair, don't just retry: fail-roll logs)
+      - name: Test apps (JVM unit tests, auto-repair with 3x retries)
         run: |
           for app in $APPS; do
             echo "== TEST $app"
