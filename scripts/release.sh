@@ -29,7 +29,7 @@ fi
 notes="Built and verified by the AppFactory pipeline for **$slug**. Debug-signed APK (installable), SHA-256 in *SHA256SUMS*."
 if ! gh release create "$tag" --repo "$repo" --target "$sha" \
      --title "$title" --notes "$notes" \
-     -- "$apk" "$checksums"; then
+     -- "$apk" "$checksums#SHA256SUMS"; then
   echo "release: create failed" >&2
   exit 1
 fi
