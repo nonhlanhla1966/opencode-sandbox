@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">Tip Calculator</string>
+    <string name="screen_title">Tip Calculator</string>
+    <string name="bill_hint">Bill amount</string>
+    <string name="bill_label">Bill</string>
+    <string name="tip_rate_label">Tip rate</string>
+    <string name="tip_percent_format">%1$d%%</string>
+    <string name="split_label">Split between</string>
+    <string name="people_minus">Fewer people</string>
+    <string name="people_plus">More people</string>
+    <string name="people_count_format">%1$d</string>
+    <string name="results_label">Results</string>
+    <string name="tip_result_label">Tip</string>
+    <string name="total_result_label">Total</string>
+    <string name="per_person_label">Per person</string>
+    <string name="about_button">About</string>
+    <string name="back_button">Back</string>
+    <string name="about_title">About</string>
+    <string name="about_body">%1$s is a lightweight, offline bill splitter.\n\nEnter the bill, pick a tip rate and the number of diners, and it instantly shows the tip, the total and each person\'s share — rounded to cents.</string>
+</resources>

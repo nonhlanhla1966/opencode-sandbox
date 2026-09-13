@@ -1,0 +1,15 @@
+<resources>
+    <color name="primary">#2E7D32</color>
+    <color name="primary_dark">#1B5E20</color>
+    <color name="accent">#FFB300</color>
+    <color name="screen_background">#F5F7FA</color>
+    <color name="text_primary">#212B36</color>
+    <color name="text_secondary">#5A6B7B</color>
+    <color name="result_callout">#2E7D32</color>
+    <color name="chip_selected_bg">#2E7D32</color>
+    <color name="chip_selected_text">#FFFFFF</color>
+    <color name="chip_unselected_bg">#E3E8EE</color>
+    <color name="chip_unselected_text">#212B36</color>
+    <color name="ic_launcher_background">#2E7D32</color>
+    <color name="ic_launcher_foreground">#FFFFFF</color>
+</resources>
