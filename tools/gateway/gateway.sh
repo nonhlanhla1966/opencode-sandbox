@@ -20,6 +20,7 @@
 #     weakening OS/permission controls. Creates no new repository, no branches,
 #     no API keys. Work stays inside this workspace (script + DESIGN.md).
 set -euo pipefail
+GW_TMPDIR=""   # scratch dir for get_latest_apk; global so the EXIT trap survives function return
 
 # -------- helpers ------------------------------------------------------------
 die()  { echo "{\"ok\":false,\"command\":\"${CMD:-}\",\"error\":$(json_esc "$1")}" >&2; exit 1; }
@@ -144,7 +145,7 @@ get_build_status() {
 get_latest_apk() {
   local slug="${1:-}"; CMD=get_latest_apk
   [ -n "$slug" ] || { echo "{\"ok\":false,\"command\":\"get_latest_apk\",\"error\":$(json_esc 'slug required')}"; exit 2; }
-  local r tag apk_url sha_url ver sha calc tmpdir verified="false"
+  local r tag apk_url sha_url ver sha calc verified="false"
   r="$(repo)" || die "cannot resolve repository"
   tag="app-${slug}-latest"
 
@@ -156,10 +157,10 @@ get_latest_apk() {
 
   ver="$(gh release view "$tag" -R "$r" --json tagName --jq .tagName 2>/dev/null || echo "$tag")"
 
-  tmpdir="$(mktemp -d)"; trap 'rm -rf "$tmpdir"' EXIT
-  if curl -fsSL "$apk_url" -o "$tmpdir/$apk_name" 2>/dev/null && curl -fsSL "$sha_url" -o "$tmpdir/SHA256SUMS" 2>/dev/null; then
-    sha="$(sed -n 's/^\([0-9a-fA-F]\{64\}\)  .*/\1/p' "$tmpdir/SHA256SUMS" | head -1 || true)"
-    calc="$(sha256sum "$tmpdir/$apk_name" | awk '{print $1}')"
+  GW_TMPDIR="$(mktemp -d)"; trap 'rm -rf "${GW_TMPDIR:-}"' EXIT
+  if curl -fsSL "$apk_url" -o "$GW_TMPDIR/$apk_name" 2>/dev/null && curl -fsSL "$sha_url" -o "$GW_TMPDIR/SHA256SUMS" 2>/dev/null; then
+    sha="$(sed -n 's/^\([0-9a-fA-F]\{64\}\)  .*/\1/p' "$GW_TMPDIR/SHA256SUMS" | head -1 || true)"
+    calc="$(sha256sum "$GW_TMPDIR/$apk_name" | awk '{print $1}')"
     [ -n "$sha" ] && [ "$sha" = "$calc" ] && verified="true"
   fi
 
