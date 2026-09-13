@@ -1,0 +1,14 @@
+# Gradle / Android build outputs (never commit)
+**/build/
+.gradle/
+local.properties
+apps/*/build/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS / misc
+.DS_Store
+*.log

@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Hello AppFactory</string>
+    <string name="press_button">Press me</string>
+    <string name="about_button">About</string>
+    <string name="back_button">Back</string>
+    <string name="about_title">About</string>
+    <string name="about_body">%1$s is a lightweight Android app produced end-to-end by the AppFactory.\nIt is intentionally dependency-free so it runs comfortably on low-RAM phones.</string>
+</resources>

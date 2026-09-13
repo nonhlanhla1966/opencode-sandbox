@@ -1,0 +1,10 @@
+<resources>
+    <color name="primary">#1565C0</color>
+    <color name="primary_dark">#0D47A1</color>
+    <color name="accent">#FFB300</color>
+    <color name="screen_background">#F5F7FA</color>
+    <color name="text_primary">#212B36</color>
+    <color name="text_secondary">#5A6B7B</color>
+    <color name="ic_launcher_background">#1565C0</color>
+    <color name="ic_launcher_ring">#FFFFFF</color>
+</resources>

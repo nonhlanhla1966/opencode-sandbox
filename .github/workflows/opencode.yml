@@ -9,13 +9,17 @@ jobs:
   opencode:
     if: |
       github.event.comment.user.type == 'User' &&
-      (contains(github.event.comment.body, '/oc') ||
+      (contains(github.event.comment.body, '/app') ||
+       contains(github.event.comment.body, '/oc') ||
        contains(github.event.comment.body, '/opencode'))
     runs-on: ubuntu-latest
+    concurrency:
+      group: appfactory-engine
+      cancel-in-progress: false
     permissions:
-      contents: read
-      id-token: write
+      contents: write
       issues: write
+      id-token: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -27,5 +31,25 @@ jobs:
         uses: anomalyco/opencode/github@latest
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           model: opencode/big-pickle
+          use_github_token: true
+          mentions: "/app, /oc, /opencode"
+          prompt: |
+            You are the Android AppFactory engine. A human issued a one-line
+            app request with /app (or /oc, /opencode) on this issue.
+
+            Execute the FULL procedure in AGENTS.md at the repository root,
+            exactly: DESIGN first (DESIGN.md with screens, navigation, visual
+            style, interactions, app-icon concept), then CODE a real,
+            lightweight, buildable Android Gradle APK under apps/<slug>,
+            TEST with ./gradlew --no-daemon testDebugUnitTest, LOCAL_VALIDATION
+            with bash scripts/validate-app.sh apps/<slug>, WRITE release.json
+            with the issue number and request, then commit and push to main.
+
+            Rules: never expose secrets; do NOT create branches or PRs; do NOT
+            create GitHub Releases (CI does that); repair failures and retry up
+            to 3 times; push through git using the provided GITHUB_TOKEN. End
+            with a concise completion comment naming the app and confirming CI
+            will publish the APK download link here.

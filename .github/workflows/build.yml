@@ -1,0 +1,123 @@
+name: appfactory-build
+
+on:
+  push:
+    branches: [main]
+    paths: ['apps/**', 'scripts/**', '.github/workflows/build.yml']
+  workflow_dispatch:
+    inputs:
+      app:
+        description: 'Single app slug to build (blank = all)'
+        required: false
+        type: string
+
+concurrency:
+  group: appfactory-build
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Collect app directories
+        id: apps
+        run: |
+          if [ -n "${{ inputs.app }}" ]; then
+            APPS="${{ inputs.app }}"
+          else
+            APPS=""
+            for d in apps/*/; do
+              [ -d "$d" ] && APPS="$APPS $(basename "$d")"
+            done
+          fi
+          APPS="$(echo $APPS | xargs -n1 | sort -u | xargs)"
+          echo "apps=[$APPS]"
+          echo "APPS=$APPS" >> "$GITHUB_ENV"
+
+      - name: Test apps (JVM unit tests — repair, don't just retry: fail-roll logs)
+        run: |
+          for app in $APPS; do
+            echo "== TEST $app"
+            ( cd "apps/$app" && bash ../../scripts/retry.sh 3 ./gradlew --no-daemon testDebugUnitTest --stacktrace )
+          done
+
+      - name: Build debug APKs (retry up to 3)
+        run: |
+          for app in $APPS; do
+            echo "== BUILD $app"
+            ( cd "apps/$app" && bash ../../scripts/retry.sh 3 ./gradlew --no-daemon assembleDebug --stacktrace )
+          done
+
+      - name: Verify APKs and publish Releases (retry up to 3)
+        id: publish
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "release_rows<<APPFACTORY_EOF"
+            for app in $APPS; do
+              apk="apps/$app/build/outputs/apk/debug/app-debug.apk"
+              appid=$(sed -n "s/.*applicationId[[:space:]]*[\"']\([^\"']*\)[\"'].*/\1/p" "apps/$app/build.gradle" | head -1)
+              ver=$(sed -n "s/.*versionName[[:space:]]*[\"']\([^\"']*\)[\"'].*/\1/p" "apps/$app/build.gradle" | head -1)
+              issue=$(python3 -c "import json;print(json.load(open('apps/$app/release.json')).get('issue') or 0)" 2>/dev/null || echo 0)
+              echo "== VERIFY $app (id=$appid ver=${ver:-?}) issue=${issue:-0}"
+              bash scripts/retry.sh 3 bash scripts/verify-apk.sh "$apk" "$appid" "${ver:-}"
+              url=$(bash scripts/release.sh "apps/$app" | sed -n 's/^release-url=//p')
+              echo "== RELEASED $app -> $url"
+              echo "$app|$issue|$url"
+            done
+            echo "APPFACTORY_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Post DOWNLOAD_READY on requesting issues
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          ROWS: ${{ steps.publish.outputs.release_rows }}
+        run: |
+          ROWS="${ROWS:-}"
+          if [ -z "$ROWS" ]; then echo "no release rows"; exit 0; fi
+          while IFS='|' read -r app issue url; do
+            [ -n "$app" ] || continue
+            if [ "${issue:-0}" -gt 0 ] 2>/dev/null; then
+              msg="DOWNLOAD_READY — **$app** is built, verified and released. Direct APK download: $url (SHA-256 checksum in the release)."
+              bash scripts/note.sh "$issue" "$msg" || true
+            else
+              echo "no requesting issue for $app (skip comment)"
+            fi
+          done <<< "$ROWS"
+
+      - name: Build summary
+        if: always()
+        run: |
+          {
+            echo "## AppFactory build result"
+            echo ""
+            for app in $APPS; do
+              apk="apps/$app/build/outputs/apk/debug/app-debug.apk"
+              if [ -f "$apk" ]; then
+                sz=$(du -h "$apk" | cut -f1)
+                echo "- **$app**: APK OK ($sz) — release: https://github.com/${{ github.repository }}/releases/download/app-$app-latest/app-debug.apk"
+              else
+                echo "- **$app**: NO APK"
+              fi
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
