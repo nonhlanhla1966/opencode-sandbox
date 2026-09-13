@@ -1,0 +1,5 @@
+{
+  "app": "tip-calculator",
+  "issue": 2,
+  "request": "E2E test of the autonomous AppFactory pipeline: build a tip-calculator app through design, code, test, push, CI build, APK verify, release, and public download link"
+}

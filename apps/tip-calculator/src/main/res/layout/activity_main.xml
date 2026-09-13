@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:id="@+id/screenTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/screen_title"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary" />
+
+        <EditText
+            android:id="@+id/billInput"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="20dp"
+            android:inputType="numberDecimal"
+            android:hint="@string/bill_hint"
+            android:textSize="18sp"
+            android:textColor="@color/text_primary"
+            android:hyphenationFrequency="none" />
+
+        <TextView
+            android:id="@+id/tipRateLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/tip_rate_label"
+            android:textSize="16sp"
+            android:textColor="@color/text_secondary" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/tipButton12"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/chip_selector"
+                android:text="@string/tip_percent_format"
+                android:textSize="14sp"
+                android:textColor="@color/chip_text_selector" />
+
+            <Button
+                android:id="@+id/tipButton15"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/chip_selector"
+                android:text="@string/tip_percent_format"
+                android:textSize="14sp"
+                android:textColor="@color/chip_text_selector" />
+
+            <Button
+                android:id="@+id/tipButton18"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/chip_selector"
+                android:text="@string/tip_percent_format"
+                android:textSize="14sp"
+                android:textColor="@color/chip_text_selector" />
+
+            <Button
+                android:id="@+id/tipButton22"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:background="@drawable/chip_selector"
+                android:text="@string/tip_percent_format"
+                android:textSize="14sp"
+                android:textColor="@color/chip_text_selector" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/splitLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/split_label"
+            android:textSize="16sp"
+            android:textColor="@color/text_secondary" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/peopleMinus"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:text="-"
+                android:textSize="22sp"
+                android:textColor="@color/text_primary" />
+
+            <TextView
+                android:id="@+id/peopleCount"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary" />
+
+            <Button
+                android:id="@+id/peoplePlus"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:text="+"
+                android:textSize="22sp"
+                android:textColor="@color/text_primary" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/resultsLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/results_label"
+            android:textSize="16sp"
+            android:textColor="@color/text_secondary" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="vertical"
+            android:background="@color/ic_launcher_background"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/tipResult"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@color/ic_launcher_foreground" />
+
+            <TextView
+                android:id="@+id/totalResult"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@color/ic_launcher_foreground" />
+
+            <TextView
+                android:id="@+id/perPersonResult"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@color/accent" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/aboutButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="20dp"
+            android:text="@string/about_button" />
+    </LinearLayout>
+</ScrollView>
