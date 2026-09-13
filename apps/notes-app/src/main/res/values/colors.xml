@@ -9,6 +9,8 @@
     <color name="text_secondary">#5B6B7F</color>
     <color name="hint_text">#8A94A6</color>
     <color name="divider">#E3E8F0</color>
+    <color name="danger">#E5484D</color>
+    <color name="search_field_bg">#EEF1F8</color>
     <color name="start_page">#E9EDFA</color>
     <color name="ic_launcher_foreground">#FFFFFF</color>
     <color name="ic_launcher_line">#3D56C9</color>
