@@ -11,7 +11,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end"
-        android:maxWidth="82%"
         android:paddingHorizontal="14dp"
         android:paddingVertical="10dp"
         android:background="@drawable/bubble_user_bg"
