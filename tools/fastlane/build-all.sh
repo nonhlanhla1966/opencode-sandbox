@@ -73,8 +73,13 @@ export FL_ROOT REPO_ROOT FL_TMP
 failures=0
 if [ "$JOBS" -gt 1 ]; then
   results="$(mktemp)"
-  echo "$APPS" | xargs -n1 -P "$JOBS" bash -c 'worker "$0"' > /dev/null 2>"$results"
-  failures="$(grep -c "worker:.*FAILED" "$results" || echo 0)"
+  echo "$APPS" | xargs -n1 -P "$JOBS" bash -c 'worker "$0"' >>"$results" 2>&1
+  cat "$results"
+  if grep -q "worker:.*FAILED" "$results"; then
+    failures="$(grep -c "worker:.*FAILED" "$results")"
+  else
+    failures=0
+  fi
   rm -f "$results"
 else
   for a in $APPS; do worker "$a" || failures=$((failures+1)); done
