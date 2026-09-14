@@ -1,0 +1,13 @@
+{
+  "id": "settings",
+  "name": "Typed Settings + Preferences",
+  "version": "1.0.0",
+  "license": "MIT",
+  "description": "Type-safe key/value settings with getters/setters, change listeners and structured section building. Android glue maps it onto SharedPreferences.",
+  "android_framework": "partial (core pure JVM; PrefsStore glue uses android.content.SharedPreferences)",
+  "requires": [],
+  "compatibility": {"jdk": "11+", "android_api": 21, "kotlin": "n/a"},
+  "jvm_testable": true,
+  "tests": ["unit"],
+  "usage": "settings screens and app configuration."
+}

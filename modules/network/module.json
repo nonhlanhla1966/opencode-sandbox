@@ -1,0 +1,13 @@
+{
+  "id": "network",
+  "name": "Network Status & Offline Detection",
+  "version": "1.0.0",
+  "license": "MIT",
+  "description": "Deterministic connectivity state machine (ONLINE/OFFLINE), change listeners and offline-first policy hinting. Android glue adds ConnectivityManager wiring.",
+  "android_framework": "partial (core pure JVM; NetworkWatcher glue uses android.net.ConnectivityManager)",
+  "requires": [],
+  "compatibility": {"jdk": "11+", "android_api": 21, "kotlin": "n/a"},
+  "jvm_testable": true,
+  "tests": ["unit"],
+  "usage": "offline-first apps and graceful network-failure UX."
+}

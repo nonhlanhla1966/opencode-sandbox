@@ -1,0 +1,12 @@
+{
+  "id": "storage-file",
+  "name": "File Storage & Backup",
+  "version": "1.0.0",
+  "license": "MIT",
+  "description": "Deterministic file manifest, safe join, and ZIP-based backup/restore using java.util.zip. Pure JVM.",
+  "android_framework": "none (pure JVM)",
+  "requires": [],
+  "compatibility": {"jdk": "11+", "android_api": 21},
+  "jvm_testable": true,
+  "tests": ["unit"]
+}

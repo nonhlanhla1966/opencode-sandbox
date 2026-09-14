@@ -1,0 +1,13 @@
+{
+  "id": "http-rest",
+  "name": "REST HTTP Client",
+  "version": "1.0.0",
+  "license": "MIT",
+  "description": "Minimal synchronous HTTP client over HttpURLConnection: GET/POST/DELETE, query building, JSON bodies, timeouts, gzip. TLS always on.",
+  "android_framework": "none (pure JVM; HttpURLConnection available on Android)",
+  "requires": ["json"],
+  "compatibility": {"jdk": "11+", "android_api": 21, "kotlin": "n/a"},
+  "jvm_testable": true,
+  "tests": ["unit", "api(offline: request/url building only)"],
+  "usage": "apps calling OpenAI-compatible chat, weather, REST backends."
+}

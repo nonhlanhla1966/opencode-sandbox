@@ -1,0 +1,13 @@
+{
+  "id": "json",
+  "name": "Minimal JSON Model + Parser",
+  "version": "1.0.0",
+  "license": "MIT",
+  "description": "Dependency-free JSON object/array model with a strict recursive-descent parser and serializer. Safe under Java 17 and Android (API 21+).",
+  "android_framework": "none (pure JVM)",
+  "requires": [],
+  "compatibility": {"jdk": "11+", "android_api": 21, "kotlin": "n/a"},
+  "jvm_testable": true,
+  "tests": ["unit"],
+  "usage": "included by the Fast Lane scaffold whenever an app needs structured configuration, persistence or API payloads."
+}

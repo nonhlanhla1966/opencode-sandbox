@@ -12,3 +12,7 @@ apps/*/build/
 # OS / misc
 .DS_Store
 *.log
+
+# Fast Lane runtime artifacts (never commit live telemetry streams)
+.fastlane/tmp/
+*.telemetry.run.json

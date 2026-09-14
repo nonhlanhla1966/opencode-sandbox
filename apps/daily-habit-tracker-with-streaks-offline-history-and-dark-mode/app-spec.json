@@ -1,0 +1,61 @@
+{
+ "apis": [
+  "openai-compatible"
+ ],
+ "application_id": "com.appfactory.daily-habit-tracker-with-streaks-offline-history-and-dark-mode",
+ "archetype": "list-form",
+ "auth": "none",
+ "complexity": {
+  "factors": [
+   "network API",
+   "offline/database",
+   "statistics"
+  ],
+  "level": "MEDIUM",
+  "score": 41
+ },
+ "data": {
+  "entities": [
+   {
+    "fields": "text, timestamp",
+    "name": "habit tracker"
+   },
+   {
+    "fields": "text, timestamp",
+    "name": "offline-first"
+   }
+  ]
+ },
+ "estimate": {
+  "band": "2-5 minutes",
+  "build_time_seconds": 120
+ },
+ "features": [
+  "habit tracker",
+  "offline-first"
+ ],
+ "final": true,
+ "generated_by": "fastlane-analyze-v1",
+ "media": [],
+ "modules": [
+  "storage-sqlite",
+  "http-rest"
+ ],
+ "name": "Daily habit tracker with streaks, offline history and dark mode",
+ "navigation": "List->Detail navigation with a Settings screen reachable from the toolbar; system back returns Home.",
+ "notifications": false,
+ "permissions": [],
+ "screens": [
+  "Home",
+  "List",
+  "Stats"
+ ],
+ "slug": "daily-habit-tracker-with-streaks-offline-history-and-dark-mode",
+ "storage": [
+  "sqlite"
+ ],
+ "summary": "A habit tracker offline-first app: Daily habit tracker with streaks, offline history and dark mode",
+ "testing": [
+  "database"
+ ]
+}

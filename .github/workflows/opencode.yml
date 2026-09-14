@@ -39,26 +39,38 @@ jobs:
           use_github_token: true
           mentions: "/app, /oc, /opencode"
           prompt: |
-            You are the Android AppFactory engine. A human issued a one-line
-            app request with /app (or /oc, /opencode) on this issue.
+            You are the OpenCode AppFactory — Fast Lane engine. A human issued
+            a one-line app request with /app (or /oc, /opencode) on this issue.
 
-            Execute the FULL procedure in AGENTS.md at the repository root,
-            exactly: DESIGN first (DESIGN.md with screens, navigation, visual
-            style, interactions, app-icon concept), then CODE a real,
-            lightweight, buildable Android Gradle APK under apps/<slug>,
-            TEST with ./gradlew --no-daemon testDebugUnitTest, LOCAL_VALIDATION
-            with bash scripts/validate-app.sh apps/<slug>, WRITE release.json
-            with the issue number and request, then commit and push to main.
+            Follow AGENTS.md and drive every step through the deterministic
+            Fast Lane CLIs; never hand-write specs or scaffold by hand:
+
+            1. ANALYZE — run the App Idea Analyzer:
+                 python3 tools/fastlane/analyze.py "<request text>" > apps/.idea.json
+               (deterministic: features, screens, permissions, APIs, modules,
+               complexity, build-time estimate).
+            2. PLAN — python3 tools/fastlane/plan.py apps/.idea.json (writes
+               architecture.json + PLAN.md next to it).
+            3. SCAFFOLD a real, lightweight, buildable Java Android project:
+                 python3 tools/fastlane/scaffold.py apps/.idea.json apps/.architecture.json apps/<slug>
+               It vendors verified modules from modules/ as source; never edit
+               generated files arbitrarily — enrich mindfully.
+            4. TESTGEN — run bash tools/fastlane/testgen.sh apps/<slug> to add
+               generated unit tests (never overwrites existing tests).
+            5. Write release.json with the requesting issue number, then run
+               bash scripts/validate-app.sh apps/<slug> (LOCAL_VALIDATION) and
+               commit + push to main.
 
             AFTER pushing, trigger CI explicitly (GITHUB_TOKEN pushes do NOT
             fire the push-triggered build workflow):
-            gh workflow run build.yml --repo ${GITHUB_REPOSITORY} \
-              --ref main -f app=<slug>
+              gh workflow run build.yml --repo ${GITHUB_REPOSITORY} \
+                --ref main -f app=<slug>
             then confirm with gh run list --workflow=build.yml.
             Do not create the GitHub Release yourself.
 
             Rules: never expose secrets; do NOT create hand-made branches or
-            Releases (CI does that); repair failures and retry up to 3 times;
-            push through git using the provided GITHUB_TOKEN. End
-            with a concise completion comment naming the app and confirming CI
-            will publish the APK download link here.
+            Releases (CI does that); use tools/fastlane/repair.sh budgets for
+            compile failures (max 3 attempts); never weaken the quality gates
+            (tools/fastlane/gates.sh C001-C010) to save time; commit to main.
+            End with a concise completion comment naming the app and confirming
+            CI will publish the APK download link here.

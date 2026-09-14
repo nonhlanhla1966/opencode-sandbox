@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">A private notes app with encrypted offline storage, backup and reminder notifications</string>
+    <string name="about_title">About</string>
+    <string name="settings_title">Settings</string>
+    <string name="feature_placeholder">Feature detail view.</string>
+</resources>

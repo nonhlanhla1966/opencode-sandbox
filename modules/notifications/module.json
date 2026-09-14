@@ -1,0 +1,13 @@
+{
+  "id": "notifications",
+  "name": "Notifications Helper",
+  "version": "1.0.0",
+  "license": "MIT",
+  "description": "Deterministic notification spec model + notification-permission posture constants. Android glue posts real notifications with channels.",
+  "android_framework": "partial (core pure JVM; Notifier glue uses android.app.Notification)",
+  "requires": [],
+  "compatibility": {"jdk": "11+", "android_api": 26, "kotlin": "n/a"},
+  "jvm_testable": true,
+  "tests": ["unit"],
+  "usage": "habit reminds, alarms, message pings."
+}

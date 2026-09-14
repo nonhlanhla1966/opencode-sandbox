@@ -1,0 +1,13 @@
+{
+  "id": "crypto",
+  "name": "Encryption Utilities",
+  "version": "1.0.0",
+  "license": "MIT",
+  "description": "AES-256-GCM encrypt/decrypt (random nonce) + deterministic key derivation + base64. Uses JCA only; works on Android and JVM.",
+  "android_framework": "none (pure JVM; JCA/Android compatible)",
+  "requires": [],
+  "compatibility": {"jdk": "11+", "android_api": 23, "kotlin": "n/a"},
+  "jvm_testable": true,
+  "tests": ["unit"],
+  "usage": "generated apps with user-supplied API keys or sensitive local data."
+}

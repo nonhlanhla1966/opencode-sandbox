@@ -1,0 +1,12 @@
+{
+  "id": "time",
+  "name": "Time Utilities",
+  "version": "1.0.0",
+  "license": "MIT",
+  "description": "Deterministic elapsed-time measurement (stopwatch) and human-readable formatting.",
+  "android_framework": "none (pure JVM)",
+  "requires": [],
+  "compatibility": {"jdk": "11+", "android_api": 21},
+  "jvm_testable": true,
+  "tests": ["unit"]
+}
