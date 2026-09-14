@@ -1,4 +1,4 @@
-package com.appfactory.modules.storage-sqlite;
+package com.appfactory.modules.storage_sqlite;
 
 import org.junit.Test;
 import java.util.List;

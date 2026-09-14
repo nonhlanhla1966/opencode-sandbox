@@ -73,6 +73,11 @@ for ref in $(grep -rhoE "@(color|drawable|string|mipmap)/[a-z_]+" "$appdir/src/m
   esac
 done
 [ "$missing" -eq 0 ] && t "scaffold launcher-icon refs resolve" || f "scaffold launcher-icon refs unresolved"
+if grep -rqE "^package [^;]*-" "$appdir/src" 2>/dev/null; then
+  f "scaffold packages use java-safe names (no hyphens)"
+else
+  t "scaffold packages use java-safe names (no hyphens)"
+fi
 
 echo "== 4. Build-time estimation =="
 est="$($FL_ROOT/estimate.sh compute "$spec" 2>/dev/null)"
