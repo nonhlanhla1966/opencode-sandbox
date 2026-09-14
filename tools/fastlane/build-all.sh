@@ -63,17 +63,43 @@ worker() {
       err "worker: $a FAILED"
       ret=1
     fi
+  else
+    err "worker: $a FAILED (app dir or build.gradle missing)"
+    ret=1
   fi
   return $ret
 }
-export -f worker
-export FL_ROOT REPO_ROOT FL_TMP
+
+# Worker child needs ok/err/leader etc. which do not survive `export -f`; run a
+# script that re-sources slib instead of a bare `bash -c 'worker "$0"'`.
+worker_script="$FL_TMP/worker-$JOBS-$$.sh"
+cat > "$worker_script" <<'WEOF'
+#!/usr/bin/env bash
+. "$FL_ROOT/slib.sh"
+shell-worker() {
+  local a="$1"
+  if [ -d "$REPO_ROOT/apps/$a" ] && [ -f "$REPO_ROOT/apps/$a/build.gradle" ]; then
+    if bash "$FL_ROOT/build.sh" "$REPO_ROOT/apps/$a" full 2>&1; then
+      ok "worker: $a OK"
+    else
+      err "worker: $a FAILED"
+      return 1
+    fi
+  else
+    err "worker: $a FAILED (app dir or build.gradle missing)"
+    return 1
+  fi
+  return 0
+}
+shell-worker "$1"
+WEOF
+chmod +x "$worker_script"
 
 # Run with optional parallelism (safe, bounded: -j2 on 4-core runners).
 failures=0
 if [ "$JOBS" -gt 1 ]; then
   results="$(mktemp)"
-  echo "$APPS" | xargs -n1 -P "$JOBS" bash -c 'worker "$0"' >>"$results" 2>&1
+  echo "$APPS" | xargs -n1 -P "$JOBS" bash "$worker_script" >>"$results" 2>&1
   cat "$results"
   if grep -q "worker:.*FAILED" "$results"; then
     failures="$(grep -c "worker:.*FAILED" "$results")"
@@ -84,6 +110,7 @@ if [ "$JOBS" -gt 1 ]; then
 else
   for a in $APPS; do worker "$a" || failures=$((failures+1)); done
 fi
+rm -f "$worker_script"
 
 elapsed=$(( ($(now_ms) - start_ms) / 1000 ))
 leader "Build complete"
