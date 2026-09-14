@@ -8,68 +8,113 @@
 # Usage:
 #   deps.sh check <build.gradle>          -> exit 0/1, report JSON
 #   deps.sh report <build.gradle>
-#   deps.sh lookup <group:artifact>
+#   deps.sh lookup <group:artifact[:version]>
 set -u
 . "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/slib.sh"
 
 REG="$REPO_ROOT/modules/DEPENDENCY_REGISTRY.json"
 
-lookup() {
-  local coord="${1:?usage: deps.sh lookup <group:artifact>}"
-  python3 - "$REG" "$coord" <<'PY'
-import json,sys,os
-reg=json.load(open(sys.argv[1]))
-coord=sys.argv[2]
-if coord in reg.get("allowlist",{}):
-    print(json.dumps({"ok":True,"coord":coord,"license":reg["allowlist"][coord]}))
-elif coord in reg.get("versions_pinned",{}):
-    print(json.dumps({"ok":True,"coord":coord,"pinned":reg["versions_pinned"][coord],
-                       "license":"vendor-pinned"}))
-else:
-    print(json.dumps({"ok":False,"coord":coord,
-                      "reason":"not in allowlist or version pins"}))
-PY
-}
+# core: reads a build.gradle, writes "STATUS\tcoord\treason" lines to stdout.
+# STATUS is one of OK / VULN / BAD.
+deps_core() {
+  python3 - "$REG" "${1:?}" <<'PY'
+import json, sys, re
 
-collect() {
-  local bg="$1"
-  python3 - "$bg" < <(grep -oE "implementation '[^']+'" "$bg" 2>/dev/null) <<'PY'
-import json,sys,re
-bg=sys.argv[1]
-lines=sys.stdin.read()
-deps=set()
-for m in re.finditer(r"implementation\s+'([^']+)'", lines):
-    deps.add(m.group(1))
-# plugin ids with versions
-bgtxt=open(bg).read() if bg else ""
-for m in re.finditer(r"id\s+'([^']+)'\s+version\s+'([^']+)'", bgtxt):
-    deps.add(m.group(1)+":"+m.group(2))
-print("\n".join(sorted(deps)))
+reg = json.load(open(sys.argv[1], encoding="utf-8"))
+bg = sys.argv[2]
+allow = reg.get("allowlist", {})          # GA -> license
+pinned = reg.get("versions_pinned", {})   # GA -> version
+vuln = reg.get("known_vulnerable", {})    # GA -> advisory
+
+OKHTTP_FIXED = (3, 12, 12)
+
+def split_coord(coord):
+    parts = coord.split(":")
+    if len(parts) == 3:
+        return parts[0] + ":" + parts[1], parts[2]
+    if len(parts) == 2:
+        return parts[0], parts[1]
+    return parts[0], ""
+
+def is_vuln(ga, version):
+    if ga not in vuln:
+        return False
+    if ga == "com.squareup.okhttp3:okhttp" and version:
+        try:
+            nums = tuple(int(p) for p in re.split(r"[.-]", version)[:3])
+            if nums >= OKHTTP_FIXED:
+                return False
+        except ValueError:
+            pass
+    return True
+
+txt = open(bg, encoding="utf-8").read()
+coords = set()
+coords.update(re.findall(
+    r"(?:implementation|testImplementation|androidTestImplementation|"
+    r"api|compileOnly|runtimeOnly|compile)\s+'([^']+)'", txt))
+for m in re.finditer(r"id\s+'([^']+)'\s+version\s+'([^']+)'", txt):
+    coords.add(m.group(1) + ":" + m.group(2))
+
+results = []
+for coord in sorted(coords):
+    ga, version = split_coord(coord)
+    if is_vuln(ga, version):
+        results.append(("VULN", coord, vuln[ga]))
+        continue
+    if ga in allow:
+        if ga in pinned and version and version != pinned[ga]:
+            results.append(("BAD", coord, "version %s != pinned %s" % (version, pinned[ga])))
+        else:
+            results.append(("OK", coord, "license %s (allowlisted)" % allow[ga]))
+        continue
+    if ga in pinned:
+        if not version or version == pinned[ga]:
+            results.append(("OK", coord, "license vendor-pinned (reproducible)"))
+        else:
+            results.append(("BAD", coord, "version %s != pinned %s" % (version, pinned[ga])))
+        continue
+    results.append(("BAD", coord, "not in allowlist or version pins"))
+
+for row in results:
+    print("\t".join(row))
 PY
 }
 
 check() {
-  local bg="${1:?usage: deps.sh check <build.gradle>}"
-  local dep result fail=0
+  local bg="${1:?usage: deps.sh check <build.gradle>}" tmp fail=0 status coord reason
   leader "Dependency intelligence — $(basename "$(dirname "$bg")")"
-  while IFS= read -r dep; do
-    [ -n "$dep" ] || continue
-    result="$(lookup "$dep")"
-    if python3 -c "import json,sys;sys.exit(0 if json.loads('''$result''')['ok'] else 1)" 2>/dev/null; then
-      ok "  $dep — $(python3 -c "import json;print(json.loads('''$result''').get('license','ok'))")"
-    else
-      err "  $dep — NOT ALLOWED ($(python3 -c "import json;print(json.loads('''$result''')['reason'])" 2>/dev/null))"
-      fail=1
-    fi
-  done < <(collect "$bg")
-  # known-vulnerable containment
-  if grep -qiE "org\.apache\.logging\.log4j|commons-collections" "$bg" 2>/dev/null; then
-    err "  dependency is on the known-vulnerable list"
-    fail=1
-  fi
+  tmp="$FL_TMP/deps-$$.tsv"
+  deps_core "$bg" > "$tmp"
+  while IFS=$'\t' read -r status coord reason; do
+    [ -n "$status" ] || continue
+    case "$status" in
+      OK)   ok "  $coord — $reason";;
+      *)    err "  $coord — NOT ALLOWED ($reason)"; fail=1;;
+    esac
+  done < "$tmp"
+  rm -f "$tmp"
   if [ "$fail" -eq 1 ]; then err "deps: dependency policy FAILED"; exit 1; fi
   ok "deps: dependency policy OK"
   exit 0
+}
+
+lookup() {
+  local coord="${1:?usage: deps.sh lookup <group:artifact[:version]>}" tmp row
+  tmp="$FL_TMP/deps-lookup-$$.gradle"
+  printf "dependencies { implementation '%s' }\n" "$coord" > "$tmp"
+  row="$(deps_core "$tmp" | head -1)"
+  rm -f "$tmp"
+  python3 - "$row" "$coord" <<'PY'
+import json, sys
+row, coord = sys.argv[1], sys.argv[2]
+if row:
+    status, found, reason = row.split("\t", 2)
+    body = {"coord": coord, "ok": status == "OK", "license": reason}
+else:
+    body = {"coord": coord, "ok": False, "reason": "no such coordinate"}
+print(json.dumps(body))
+PY
 }
 
 case "${1:-}" in

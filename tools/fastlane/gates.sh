@@ -80,9 +80,12 @@ aapt2="${AAPT2:-$(command -v aapt2 2>/dev/null || true)}"
 if [ -n "$aapt2" ]; then
   bad=0
   tmpd="$(mktemp -d)"
+  tmpr="$(mktemp)"
+  find src/main/res -name '*.xml' 2>/dev/null > "$tmpr"
   while IFS= read -r res; do
     "$aapt2" compile "$res" -o "$tmpd" >/dev/null 2>&1 || bad=1
-  done < <(find src/main/res -name '*.xml' 2>/dev/null)
+  done < "$tmpr"
+  rm -f "$tmpr"
   rm -rf "$tmpd"
   if [ "$bad" -eq 0 ]; then gate C005_RESOURCE PASS "aapt2 compiled resources"; else gate C005_RESOURCE FAIL "aapt2 resource compile failed"; fi
 else
