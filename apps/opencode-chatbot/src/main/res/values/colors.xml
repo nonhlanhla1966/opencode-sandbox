@@ -1,0 +1,30 @@
+<resources>
+    <!-- Light scheme -->
+    <color name="bg_light">#F4F6FB</color>
+    <color name="surface_light">#FFFFFF</color>
+    <color name="text_primary_light">#1C2333</color>
+    <color name="text_secondary_light">#5B6B7F</color>
+    <color name="bubble_user_light">#4C6EF5</color>
+    <color name="bubble_assistant_light">#FFFFFF</color>
+    <color name="code_bg_light">#0F172A</color>
+    <color name="divider_light">#E2E7F0</color>
+
+    <!-- Dark scheme -->
+    <color name="bg_dark">#0F1322</color>
+    <color name="surface_dark">#1A2036</color>
+    <color name="text_primary_dark">#E7EAF3</color>
+    <color name="text_secondary_dark">#9AA6C4</color>
+    <color name="bubble_user_dark">#4C6EF5</color>
+    <color name="bubble_assistant_dark">#232B45</color>
+    <color name="code_bg_dark">#0B0F1C</color>
+    <color name="divider_dark">#2A3352</color>
+
+    <!-- Shared brand colors -->
+    <color name="primary">#4C6EF5</color>
+    <color name="primary_dark">#3D56C9</color>
+    <color name="accent">#22C55E</color>
+    <color name="danger">#E5484D</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="ic_launcher_background">#1565C0</color>
+</resources>

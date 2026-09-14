@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/chatBackground"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/settings_provider_header"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="?attr/chatTextSecondary"
+            android:layout_marginBottom="8dp" />
+
+        <Spinner
+            android:id="@+id/spinner_preset"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/et_provider_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/hint_provider_name"
+            android:inputType="text"
+            android:textSize="15sp"
+            android:textColor="?attr/chatTextPrimary"
+            android:textColorHint="?attr/chatTextSecondary"
+            android:padding="10dp"
+            android:background="@drawable/composer_bg"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/et_endpoint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/hint_endpoint"
+            android:inputType="textUri"
+            android:textSize="15sp"
+            android:textColor="?attr/chatTextPrimary"
+            android:textColorHint="?attr/chatTextSecondary"
+            android:padding="10dp"
+            android:background="@drawable/composer_bg"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <EditText
+                android:id="@+id/et_api_key"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:hint="@string/label_api_key"
+                android:inputType="textPassword"
+                android:textSize="15sp"
+                android:textColor="?attr/chatTextPrimary"
+                android:textColorHint="?attr/chatTextSecondary"
+                android:padding="10dp"
+                android:background="@drawable/composer_bg" />
+
+            <Button
+                android:id="@+id/btn_toggle_key"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="40dp"
+                android:layout_marginStart="8dp"
+                android:text="@string/action_show_key" />
+        </LinearLayout>
+
+        <EditText
+            android:id="@+id/et_model"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/hint_model"
+            android:inputType="text"
+            android:textSize="15sp"
+            android:textColor="?attr/chatTextPrimary"
+            android:textColorHint="?attr/chatTextSecondary"
+            android:padding="10dp"
+            android:background="@drawable/composer_bg"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <EditText
+                android:id="@+id/et_temperature"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:hint="@string/label_temperature"
+                android:inputType="numberDecimal"
+                android:textSize="15sp"
+                android:textColor="?attr/chatTextPrimary"
+                android:textColorHint="?attr/chatTextSecondary"
+                android:padding="10dp"
+                android:background="@drawable/composer_bg" />
+
+            <EditText
+                android:id="@+id/et_max_tokens"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:hint="@string/label_max_tokens"
+                android:inputType="number"
+                android:textSize="15sp"
+                android:textColor="?attr/chatTextPrimary"
+                android:textColorHint="?attr/chatTextSecondary"
+                android:padding="10dp"
+                android:background="@drawable/composer_bg" />
+        </LinearLayout>
+
+        <EditText
+            android:id="@+id/et_system_prompt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/hint_system_prompt"
+            android:inputType="textMultiLine"
+            android:minLines="2"
+            android:maxLines="6"
+            android:textSize="15sp"
+            android:textColor="?attr/chatTextPrimary"
+            android:textColorHint="?attr/chatTextSecondary"
+            android:padding="10dp"
+            android:background="@drawable/composer_bg"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/label_theme"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="?attr/chatTextSecondary"
+            android:layout_marginBottom="4dp" />
+
+        <Spinner
+            android:id="@+id/spinner_theme"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp" />
+
+        <Button
+            android:id="@+id/btn_save"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/action_save"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/settings_data_header"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="?attr/chatTextSecondary"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btn_export"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/action_export" />
+
+        <Button
+            android:id="@+id/btn_import"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/action_import" />
+
+        <Button
+            android:id="@+id/btn_clear_keys"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/action_clear_keys"
+            android:textColor="@color/danger" />
+
+        <Button
+            android:id="@+id/btn_clear_chats"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/action_clear_chats"
+            android:textColor="@color/danger" />
+
+        <Button
+            android:id="@+id/btn_about"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/action_about" />
+    </LinearLayout>
+</ScrollView>

@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="?attr/chatBackground">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="?attr/chatSurface"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="8dp"
+        android:baselineAligned="false">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:text="@string/header_title"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="?attr/chatTextPrimary"
+            android:singleLine="true" />
+
+        <Button
+            android:id="@+id/btn_new"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="40dp"
+            android:paddingHorizontal="10dp"
+            android:text="@string/action_new"
+            android:textSize="18sp"
+            android:contentDescription="@string/action_new_chat" />
+
+        <Button
+            android:id="@+id/btn_chats"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="40dp"
+            android:paddingHorizontal="10dp"
+            android:text="@string/action_conversations" />
+
+        <Button
+            android:id="@+id/btn_settings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="40dp"
+            android:paddingHorizontal="10dp"
+            android:text="@string/action_settings" />
+    </LinearLayout>
+
+    <!-- Current conversation title -->
+    <TextView
+        android:id="@+id/chat_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="6dp"
+        android:textSize="12sp"
+        android:textColor="?attr/chatTextSecondary"
+        android:singleLine="true"
+        android:ellipsize="end" />
+
+    <ListView
+        android:id="@+id/msg_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:stackFromBottom="true"
+        android:transcriptMode="normal"
+        android:divider="@null"
+        android:clipToPadding="false"
+        android:paddingBottom="6dp" />
+
+    <TextView
+        android:id="@+id/msg_empty"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingHorizontal="32dp"
+        android:paddingVertical="24dp"
+        android:gravity="center"
+        android:textSize="14sp"
+        android:textColor="?attr/chatTextSecondary"
+        android:text="@string/chat_empty_hint" />
+
+    <!-- Composer -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="bottom"
+        android:background="?attr/chatSurface"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="10dp"
+        android:baselineAligned="false">
+
+        <EditText
+            android:id="@+id/edit_input"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:minLines="1"
+            android:maxLines="6"
+            android:inputType="textMultiLine|textCapSentences|textAutoCorrect"
+            android:gravity="top|start"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="10dp"
+            android:background="@drawable/composer_bg"
+            android:textSize="15sp"
+            android:textColor="?attr/chatTextPrimary"
+            android:textColorHint="?attr/chatTextSecondary"
+            android:hint="@string/hint_composer"
+            android:selectAllOnFocus="false"
+            android:imeOptions="actionNone" />
+
+        <Button
+            android:id="@+id/btn_send"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:minWidth="72dp"
+            android:layout_marginStart="8dp"
+            android:text="@string/action_send"
+            android:background="@drawable/send_button_bg"
+            android:textColor="#FFFFFF" />
+
+        <Button
+            android:id="@+id/btn_stop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:minWidth="72dp"
+            android:layout_marginStart="8dp"
+            android:visibility="gone"
+            android:text="@string/action_stop"
+            android:background="@drawable/stop_button_bg"
+            android:textColor="#FFFFFF" />
+    </LinearLayout>
+</LinearLayout>

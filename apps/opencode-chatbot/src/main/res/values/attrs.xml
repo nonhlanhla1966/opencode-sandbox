@@ -1,0 +1,12 @@
+<resources>
+    <attr name="chatBackground" format="color" />
+    <attr name="chatSurface" format="color" />
+    <attr name="chatTextPrimary" format="color" />
+    <attr name="chatTextSecondary" format="color" />
+    <attr name="chatUserBubble" format="color" />
+    <attr name="chatAssistantBubble" format="color" />
+    <attr name="chatCodeBackground" format="color" />
+    <attr name="chatDivider" format="color" />
+    <attr name="chatAccent" format="color" />
+    <attr name="chatDanger" format="color" />
+</resources>

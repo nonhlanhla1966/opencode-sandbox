@@ -1,0 +1,45 @@
+<resources>
+    <style name="Theme.OpencodeChatbot" parent="android:Theme.Material.Light">
+        <item name="chatBackground">@color/bg_light</item>
+        <item name="chatSurface">@color/surface_light</item>
+        <item name="chatTextPrimary">@color/text_primary_light</item>
+        <item name="chatTextSecondary">@color/text_secondary_light</item>
+        <item name="chatUserBubble">@color/bubble_user_light</item>
+        <item name="chatAssistantBubble">@color/bubble_assistant_light</item>
+        <item name="chatCodeBackground">@color/code_bg_light</item>
+        <item name="chatDivider">@color/divider_light</item>
+        <item name="chatAccent">@color/accent</item>
+        <item name="chatDanger">@color/danger</item>
+
+        <item name="android:colorPrimary">@color/primary</item>
+        <item name="android:colorPrimaryDark">@color/primary_dark</item>
+        <item name="android:colorAccent">@color/primary</item>
+        <item name="android:windowBackground">@color/bg_light</item>
+        <item name="android:statusBarColor">@color/primary_dark</item>
+        <item name="android:navigationBarColor">@color/bg_light</item>
+        <item name="android:textColorPrimary">@color/text_primary_light</item>
+        <item name="android:textColorSecondary">@color/text_secondary_light</item>
+    </style>
+
+    <style name="Theme.OpencodeChatbot.Dark" parent="android:Theme.Material">
+        <item name="chatBackground">@color/bg_dark</item>
+        <item name="chatSurface">@color/surface_dark</item>
+        <item name="chatTextPrimary">@color/text_primary_dark</item>
+        <item name="chatTextSecondary">@color/text_secondary_dark</item>
+        <item name="chatUserBubble">@color/bubble_user_dark</item>
+        <item name="chatAssistantBubble">@color/bubble_assistant_dark</item>
+        <item name="chatCodeBackground">@color/code_bg_dark</item>
+        <item name="chatDivider">@color/divider_dark</item>
+        <item name="chatAccent">@color/accent</item>
+        <item name="chatDanger">@color/danger</item>
+
+        <item name="android:colorPrimary">@color/primary</item>
+        <item name="android:colorPrimaryDark">@color/primary_dark</item>
+        <item name="android:colorAccent">@color/primary</item>
+        <item name="android:windowBackground">@color/bg_dark</item>
+        <item name="android:statusBarColor">@color/primary_dark</item>
+        <item name="android:navigationBarColor">@color/bg_dark</item>
+        <item name="android:textColorPrimary">@color/text_primary_dark</item>
+        <item name="android:textColorSecondary">@color/text_secondary_dark</item>
+    </style>
+</resources>
