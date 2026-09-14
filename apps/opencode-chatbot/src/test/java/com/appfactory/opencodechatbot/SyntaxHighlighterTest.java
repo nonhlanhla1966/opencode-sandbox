@@ -14,14 +14,15 @@ public class SyntaxHighlighterTest {
     @Test
     public void highlightsJavaKeywords() {
         String code = "public void hello() { return; }";
-        boolean keywordFound = false;
+        java.util.List<String> keywords = new java.util.ArrayList<>();
         for (SyntaxHighlighter.Token t : SyntaxHighlighter.highlight("java", code)) {
             if (t.kind == SyntaxHighlighter.KIND_KEYWORD) {
-                assertEquals("public", code.substring(t.start, t.end));
-                keywordFound = true;
+                keywords.add(code.substring(t.start, t.end));
             }
         }
-        assertTrue(keywordFound);
+        assertTrue(keywords.contains("public"));
+        assertTrue(keywords.contains("void"));
+        assertTrue(keywords.contains("return"));
     }
 
     @Test

@@ -25,8 +25,11 @@ public final class SettingsValidator {
             return false;
         }
         String e = endpoint.trim();
-        return (e.startsWith("http://") || e.startsWith("https://"))
-                && e.length() > 7;
+        if (!(e.startsWith("http://") || e.startsWith("https://"))) {
+            return false;
+        }
+        int schemeEnd = e.indexOf("://") + 3;
+        return schemeEnd < e.length();
     }
 
     /** Clamp a temperature into [0, 2]; NaN becomes the default. */

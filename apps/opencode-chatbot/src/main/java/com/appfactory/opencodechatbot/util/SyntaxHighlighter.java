@@ -176,7 +176,7 @@ public final class SyntaxHighlighter {
                 i = end;
                 continue;
             }
-            if (c == ';' && (lang.equals("c") || lang.equals("java") || lang.equals("rust") || lang.equals("sql"))) {
+            if (c == ';' && lang.equals("sql")) {
                 int end = code.indexOf('\n', i);
                 end = (end == -1) ? n : end;
                 tokens.add(new Token(i, end, KIND_COMMENT));
