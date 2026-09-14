@@ -20,7 +20,9 @@ print(json.dumps({"severity":sys.argv[1],"name":sys.argv[2],
 scan_src() {
   local src_dir="$app_dir/src"
   [ -d "$src_dir" ] || return 0
-  local f rel line
+  local f rel line tmp
+  tmp="$FL_TMP/security-files-$$.txt"
+  find "$src_dir" -type f \( -name '*.java' -o -name '*.xml' -o -name '*.kt' \) 2>/dev/null > "$tmp"
   while IFS= read -r f; do
     rel="${f#"$app_dir"/}"
     if grep -lE "ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|sk-[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|BEGIN (RSA )?PRIVATE KEY|x-access-token[: ]" "$f" >/dev/null 2>&1; then
@@ -45,7 +47,8 @@ scan_src() {
     if grep -qE "Log\.[dviw]\([^,]+,\s*(apiKey|token|password|secret|api_key)" "$f" 2>/dev/null; then
       add "HIGH" "sensitive_logging" "Logging a credential variable" "$rel"
     fi
-  done < <(find "$src_dir" -type f \( -name '*.java' -o -name '*.xml' -o -name '*.kt' \) 2>/dev/null)
+  done < "$tmp"
+  rm -f "$tmp"
 }
 
 scan_manifest() {
@@ -67,15 +70,29 @@ scan_manifest() {
 }
 
 scan_deps() {
-  local bg="$app_dir/build.gradle" dep
+  local bg="$app_dir/build.gradle" tmp
   [ -f "$bg" ] || return 0
-  local reg="$REPO_ROOT/modules/DEPENDENCIES.md"
-  while IFS= read -r dep; do
-    coord="${dep//\'/}"
-    if [ -f "$reg" ] && grep -qiE "VULNERABLE|CVE-" "$reg" 2>/dev/null && grep -qiF "$coord" "$reg" 2>/dev/null; then
-      add "HIGH" "known_vulnerable_dependency" "$coord" "build.gradle"
-    fi
-  done < <(grep -oE "implementation '[^']+'" "$bg" 2>/dev/null | sed "s/implementation '//;s/'//")
+  local reg="$REPO_ROOT/modules/DEPENDENCY_REGISTRY.json"
+  tmp="$FL_TMP/security-deps-$$.txt"
+  python3 - "$bg" "$reg" > "$tmp" <<'PY'
+import json, sys, re
+bg, reg_path = sys.argv[1], sys.argv[2]
+reg = json.load(open(reg_path, encoding="utf-8"))
+vuln = reg.get("known_vulnerable", {})
+txt = open(bg, encoding="utf-8").read()
+coords = re.findall(
+    r"(?:implementation|testImplementation|androidTestImplementation|"
+    r"api|compileOnly|runtimeOnly)\s+'([^']+)'", txt)
+for coord in coords:
+    ga = ":".join(coord.split(":")[:2])
+    if ga in vuln:
+        print("\t".join(("HIGH", "known_vulnerable_dependency", coord, vuln[ga])))
+PY
+  while IFS=$'\t' read -r sev name coord note; do
+    [ -n "$name" ] || continue
+    add "$sev" "$name" "$coord ($note)" "build.gradle"
+  done < "$tmp"
+  rm -f "$tmp"
 }
 
 scan_metadata() {

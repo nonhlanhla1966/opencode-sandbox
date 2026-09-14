@@ -85,7 +85,7 @@ bash "$FL_ROOT/security-scan.sh" "$bad" >/dev/null 2>&1 && f "security: leaks no
 
 echo "== 7. Dependency policy =="
 printf "plugins { id 'com.android.application' version '8.5.2' }\ndependencies { testImplementation 'junit:junit:4.13.2' }\n" > "$TMP/ok.gradle"
-bash "$FL_ROOT/deps.sh" check "$TMP/ok.gradle" >/dev/null 2>&1 && t "deps: allowlist ok" || f "deps: allowlist rejects known-good"
+bash "$FL_ROOT/deps.sh" check "$TMP/ok.gradle" >/dev/null 2>&1 && t "deps: known-good allowed" || f "deps: known-good rejected"
 printf "dependencies { implementation 'org.apache.logging.log4j:log4j-core:2.14.0' }\n" > "$TMP/bad.gradle"
 bash "$FL_ROOT/deps.sh" check "$TMP/bad.gradle" >/dev/null 2>&1 && f "deps: vulnerable dep allowed" || t "deps: vulnerable dep rejected"
 
