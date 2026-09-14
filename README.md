@@ -80,6 +80,9 @@ branching. Self-tests (JVM-free, bounded live calls):
 * `apps/hello-appfactory/` — seed/template app: a real, buildable, dependency-
   free Java APK (minSdk 21, two screens). Use it as the reference template
   whenever you implement a new app.
+* `apps/opencode-chatbot/` — open-source AI chat client: streaming via any
+  OpenAI-compatible API, markdown + code highlighting, per-conversation
+  storage, encrypted API keys, light/dark/system themes, no ads, no accounts.
 
 ## Architecture rules
 
