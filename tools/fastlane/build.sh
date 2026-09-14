@@ -68,6 +68,9 @@ run_gradle() {
   fi
   err "gradle $task failed — tail of $log:"
   tail -n 40 "$log" >&2 2>/dev/null || true
+  err "gradle $task failure causes:"
+  grep -nE "What went wrong|Execution failed|There (were|was)|FAILED [0-9]+|error:|Caused by:|> Task .*FAILED|testDebugUnitTest FAILED|com\.appfactory\." "$log" \
+    | tail -n 40 >&2 2>/dev/null || true
   return 1
 }
 
