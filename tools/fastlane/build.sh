@@ -62,8 +62,13 @@ fi
 run_gradle() {
   local task="$1"; shift
   local log="$FL_TMP/$slug-$task.log"
-  bash "$REPO_ROOT/tools/fastlane/repair.sh" "$budget" "$app_dir" "$log" -- \
-    ./gradlew "${GRADLE_ARGS[@]}" "$task" "$@" >/dev/null 2>&1
+  if bash "$REPO_ROOT/tools/fastlane/repair.sh" "$budget" "$app_dir" "$log" -- \
+     ./gradlew "${GRADLE_ARGS[@]}" "$task" "$@" >/dev/null 2>&1; then
+    return 0
+  fi
+  err "gradle $task failed — tail of $log:"
+  tail -n 40 "$log" >&2 2>/dev/null || true
+  return 1
 }
 
 # ---- compile (assembleDebug) --------------------------------------------------
