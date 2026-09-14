@@ -1,0 +1,37 @@
+{
+  "policy": "Prefer stable, well-tested, open-source dependencies. Unknown or unvetted coordinates block release (gate C007).",
+  "versions_pinned": {
+    "com.android.application": "8.5.2",
+    "com.android.tools.build:gradle": "8.5.2",
+    "org.jetbrains.kotlin.android": "1.9.24",
+    "junit:junit": "4.13.2"
+  },
+  "allowlist": {
+    "org.jetbrains.kotlin:kotlin-stdlib": "MIT",
+    "androidx.activity:activity": "Apache-2.0",
+    "androidx.appcompat:appcompat": "Apache-2.0",
+    "androidx.constraintlayout:constraintlayout": "Apache-2.0",
+    "androidx.recyclerview:recyclerview": "Apache-2.0",
+    "androidx.lifecycle:lifecycle-runtime": "Apache-2.0",
+    "androidx.room:room-runtime": "Apache-2.0",
+    "androidx.datastore:datastore-preferences": "Apache-2.0",
+    "com.squareup.okhttp3:okhttp": "Apache-2.0",
+    "com.squareup.okhttp3:logging-interceptor": "Apache-2.0",
+    "com.squareup.retrofit2:retrofit": "Apache-2.0",
+    "com.squareup.retrofit2:converter-gson": "Apache-2.0",
+    "com.google.code.gson:gson": "Apache-2.0",
+    "com.fasterxml.jackson.core:jackson-databind": "Apache-2.0",
+    "com.google.zxing:core": "Apache-2.0",
+    "com.google.android.material:material": "Apache-2.0",
+    "org.jetbrains.kotlinx:kotlinx-coroutines-android": "Apache-2.0"
+  },
+  "known_vulnerable": {
+    "commons-collections:commons-collections": "CVE-2015-7501 (unsafe deserialization)",
+    "org.apache.logging.log4j:log4j-core": "CVE-2021-44228 (log4shell) unless >=2.17.1",
+    "com.squareup.okhttp3:okhttp": "CVE-2021-0341 (>=3.0.0 AND VERIFY_BYPASS) — fixed in 3.12.12"
+  },
+  "notes": [
+    "Apps are Java-first and dependency-light by design; every production dependency must map to a license here or be rejected by gate C007.",
+    "junit:junit 4.13.2 is the single test dependency used across all generated apps."
+  ]
+}

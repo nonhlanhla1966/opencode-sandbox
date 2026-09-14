@@ -1,0 +1,62 @@
+{
+ "apis": [],
+ "application_id": "com.appfactory.a-private-notes-app-with-encrypted-offline-storage-backup-and-reminder-notifications",
+ "archetype": "list-form",
+ "auth": "none",
+ "complexity": {
+  "factors": [
+   "notifications",
+   "offline/database",
+   "security/crypto"
+  ],
+  "level": "MEDIUM",
+  "score": 31
+ },
+ "data": {
+  "entities": [
+   {
+    "fields": "text, timestamp",
+    "name": "habit tracker"
+   },
+   {
+    "fields": "text, timestamp",
+    "name": "notes"
+   }
+  ]
+ },
+ "estimate": {
+  "band": "2-5 minutes",
+  "build_time_seconds": 120
+ },
+ "features": [
+  "habit tracker",
+  "notes",
+  "crypto/secure",
+  "offline-first"
+ ],
+ "final": true,
+ "generated_by": "fastlane-analyze-v1",
+ "media": [],
+ "modules": [
+  "storage-sqlite",
+  "notifications"
+ ],
+ "name": "A private notes app with encrypted offline storage, backup and reminder notifications",
+ "navigation": "Single-activity flow with back navigation between screens.",
+ "notifications": true,
+ "permissions": [
+  "android.permission.POST_NOTIFICATIONS"
+ ],
+ "screens": [
+  "Home",
+  "Notifications"
+ ],
+ "slug": "a-private-notes-app-with-encrypted-offline-storage-backup-and-reminder-notifications",
+ "storage": [
+  "sqlite"
+ ],
+ "summary": "A habit tracker notes crypto/secure offline-first app: A private notes app with encrypted offline storage, backup and reminder notifications",
+ "testing": [
+  "database"
+ ]
+}

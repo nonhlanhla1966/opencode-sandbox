@@ -1,0 +1,13 @@
+{
+  "id": "validation",
+  "name": "Form Validation",
+  "version": "1.0.0",
+  "license": "MIT",
+  "description": "Required, email, numeric range, length and regex validators with a composable Result.",
+  "android_framework": "none (pure JVM)",
+  "requires": [],
+  "compatibility": {"jdk": "11+", "android_api": 21, "kotlin": "n/a"},
+  "jvm_testable": true,
+  "tests": ["unit"],
+  "usage": "automatic with every generated app (form screens)."
+}

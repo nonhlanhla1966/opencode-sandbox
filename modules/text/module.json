@@ -1,0 +1,13 @@
+{
+  "id": "text",
+  "name": "Text Utilities",
+  "version": "1.0.0",
+  "license": "MIT",
+  "description": "Slugify, title-case, truncate, strip-to-single-space, format bytes/duration.",
+  "android_framework": "none (pure JVM)",
+  "requires": [],
+  "compatibility": {"jdk": "11+", "android_api": 21, "kotlin": "n/a"},
+  "jvm_testable": true,
+  "tests": ["unit"],
+  "usage": "automatic with every generated app."
+}

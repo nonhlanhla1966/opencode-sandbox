@@ -17,35 +17,70 @@ Comment on any issue (or PR) in this repository:
 /app A lightweight offline habit tracker with a 7-day streak view and gentle reminders
 ```
 
-The engine (`opencode` / `opencode/big-pickle` running in GitHub Actions)
-executes the full pipeline automatically:
+The engine (an OpenCode agent running on `opencode/big-pickle` in GitHub
+Actions) drives the deterministic **Fast Lane** pipeline (est', quality gates,
+security scan and stage telemetry run on every build):
 
 ```
-IDEA -> DESIGN -> CODE -> TEST -> LOCAL_VALIDATION -> GITHUB_PUSH
-     -> CI_BUILD -> APK_VERIFY -> RELEASE -> DOWNLOAD_READY
+IDEA -> ANALYZE -> PLAN -> SCAFFOLD -> TESTGEN -> LOCAL_VALIDATION
+     -> GITHUB_PUSH -> CI_BUILD -> FAST_LANE (est/gates/security/telemetry)
+     -> APK_VERIFY -> RELEASE -> DOWNLOAD_READY
 ```
 
 When the build finishes you get a `DOWNLOAD_READY` comment on the issue with a
 direct public APK download link.
+
+## Fast Lane engine
+
+Deterministic, reproducible engine in `tools/fastlane/` — the agent runs the
+CLIs; it never hand-writes specs or scaffolds by hand.
+
+| Tool | What it does |
+|---|---|
+| `analyze.py` | App Idea Analyzer — deterministic features/screens/permissions/APIs/storage/complexity + build-time estimate → `app-spec.json` |
+| `plan.py` | Planner — `architecture.json` + `PLAN.md` (modules, layers, DB, TLS-always-on APIs, permissions, testing, release gates, JDK17/Gradle/AGP8.5.2/SDK34 pins) |
+| `scaffold.py` | Project generator — real Java Android Gradle app under `apps/<slug>/`, vendored modules, wrapper from `skel/`, dark theme, DESIGN.md, PLAN.md, unit tests |
+| `testgen.sh` | Automatic unit-test generation (never overwrites existing tests) |
+| `build.sh` | Per-app orchestrator: est banner → compile (repair budget) → tests → gates → security → perf → verify → telemetry |
+| `build-all.sh` | Batch/parallel build for CI (`-j N`), whole-run estimate |
+| `estimate.sh` | Build-time estimator, self-tuned from `.fastlane/telemetry.json` |
+| `telemetry.sh` | Stage timings per build, tapped into the run history |
+| `repair.sh` + `fixes/` | Error classification + bounded repair loop (budget 3) |
+| `gates.sh` | Quality gates C001–C010 — any FAIL blocks release |
+| `security-scan.sh` | Static scan: secrets, cleartext, exported components, weak perms |
+| `deps.sh` + `modules/DEPENDENCY_REGISTRY.json` | Dependency allowlist + known-vulnerable table |
+| `perf.sh` | APK size / method-count heuristics |
+| `regression.sh` | Regression lab over the protected apps |
+| `selftest.sh` | No-SDK engine self-tests (currently 30/30 pass) |
+
+## Verified modules
+
+`modules/<id>/` are reusable Java components (pure JVM + optional Android
+glue), each with tests, vendored into generated apps as source. Currently:
+`json`, `text`, `validation`, `time`, `crypto`, `storage-sqlite`, `http-rest`,
+`settings`, `network`, `retry`, `themegen`, `storage-file`, `notifications`,
+`media-image`.
 
 ## Pipeline stages
 
 | Stage | Owner | What happens |
 |-------|-------|--------------|
 | IDEA | You | One-line `/app <description>` comment |
-| DESIGN | OpenCode agent | `apps/<slug>/DESIGN.md` — screens, navigation, visual style, interactions, app-icon concept (required before code) |
-| CODE | OpenCode agent | Real, buildable, lightweight Android Gradle project under `apps/<slug>/` |
-| TEST | OpenCode agent + CI | JVM unit tests; failures are repaired and retried up to 3 times |
+| ANALYZE | Fast Lane | `analyze.py` — deterministic spec + complexity + estimate |
+| PLAN | Fast Lane | `plan.py` — architecture.json + PLAN.md |
+| SCAFFOLD | Fast Lane | `scaffold.py` — real project under `apps/<slug>/` with DESIGN.md |
+| TESTGEN | Fast Lane | `testgen.sh` — generated unit tests |
 | LOCAL_VALIDATION | OpenCode agent | `scripts/validate-app.sh` structural checks |
-| GITHUB_PUSH | OpenCode agent | Commit (incl. design) and push to `main` |
-| CI_BUILD | GitHub Actions | `build.yml` compiles `apps/*` on `ubuntu-latest` |
+| GITHUB_PUSH | OpenCode agent | Commit and push to `main` (design + code together) |
+| CI_BUILD | GitHub Actions | `build.yml` compiles `apps/*` on `ubuntu-latest` via `build-all.sh` |
+| FAST_LANE | GitHub Actions | Estimate banner, quality gates C001–C010, security scan, perf, telemetry |
 | APK_VERIFY | GitHub Actions | `aapt dump badging` checks package, version, launchable activity |
 | RELEASE | GitHub Actions | Idempotent rolling release `app-<slug>-latest` with APK + `SHA256SUMS` |
 | DOWNLOAD_READY | GitHub Actions | Posts the public download link on the requesting issue |
 
 The agent repairs and retries its own failures up to **3 times** (design/code/
-test/validation). CI retries build, verify and release steps up to **3 times**
-before failing.
+test/validation), and `build.sh` uses the same bounded repair budget in CI. The
+quality gates and security scan can never be softened to save time.
 
 ## Remote gateway (CLI)
 
@@ -114,6 +149,10 @@ branching. Self-tests (JVM-free, bounded live calls):
 ├── docs/DESIGN_TEMPLATE.md    # Design-first template (screens/nav/style/icon)
 ├── scripts/                   # validate-app, retry, verify-apk, release, note
 ├── apps/<slug>/               # one standalone Android project per app
+├── modules/<id>/              # verified reusable Java modules (+ tests)
+├── modules/DEPENDENCY_REGISTRY.json
+├── .fastlane/telemetry.json   # aggregated build telemetry (self-tuning estimates)
+├── tools/fastlane/            # Fast Lane engine (analyze/plan/scaffold/build/...)
 ├── tools/gateway/             # JSON CLI control plane (create/status/apk)
 └── .github/workflows/
     ├── opencode.yml           # Engine entry point (agent + trigger)

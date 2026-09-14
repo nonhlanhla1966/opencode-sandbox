@@ -1,0 +1,13 @@
+{
+  "id": "retry",
+  "name": "Retry & Backoff",
+  "version": "1.0.0",
+  "license": "MIT",
+  "description": "Exponential backoff with jitter, bounded retries, and a deterministic RetryRunner for network/API calls and startup work.",
+  "android_framework": "none (pure JVM)",
+  "requires": [],
+  "compatibility": {"jdk": "11+", "android_api": 21, "kotlin": "n/a"},
+  "jvm_testable": true,
+  "tests": ["unit"],
+  "usage": "automatic error-fix loops and resilient API calls."
+}

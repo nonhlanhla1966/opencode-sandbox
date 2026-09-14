@@ -1,0 +1,12 @@
+{
+  "id": "media-image",
+  "name": "Image & Camera Helpers",
+  "version": "1.0.0",
+  "license": "MIT",
+  "description": "Aspect-ratio math, sample-size computation and image dimension validation. Android glue uses ACTION_IMAGE_CAPTURE + MediaStore, respecting runtime camera permission.",
+  "android_framework": "partial (core pure JVM; CameraGlue uses android.provider.MediaStore / Intent)",
+  "requires": [],
+  "compatibility": {"jdk": "11+", "android_api": 21},
+  "jvm_testable": true,
+  "tests": ["unit"]
+}

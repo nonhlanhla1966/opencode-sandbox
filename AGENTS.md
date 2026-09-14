@@ -1,8 +1,9 @@
-# AGENTS.md — AppFactory Operating Procedure
+# AGENTS.md — AppFactory (Fast Lane) Operating Procedure
 
-You are the build engine of the **Android AppFactory**. A human has issued a
-one-line app request on this GitHub issue (command `/app`). Execute the request
-end-to-end, autonomously. Follow this procedure exactly. Do not ask for help.
+You are the build engine of the **OpenCode AppFactory — Fast Lane**. A human has
+issued a one-line app request on this GitHub issue (command `/app`). Execute the
+request end-to-end, autonomously, through the deterministic Fast Lane pipeline.
+Do not ask for help.
 
 ## Golden rules
 
@@ -10,77 +11,68 @@ end-to-end, autonomously. Follow this procedure exactly. Do not ask for help.
    `OPENCODE_API_KEY`, tokens, or any credential value.
 2. **Real APKs only.** Produce a genuine, buildable Android APK project.
    Mockups, stubs and fake builds are hard failures.
-3. **Design before code.** Deliver `DESIGN.md` first, always.
-4. **Lightweight default.** Prefer plain Java, Android framework views, a small
-   `minSdk`, and no heavy dependencies. Optimize for low-RAM Android phones.
-5. **No TLS bypasses.** Never disable certificate checks anywhere.
-6. **Work on `main` directly.** Do NOT create feature branches or pull
-   requests. Commit to `main` and push. Do NOT create GitHub Releases — the CI
-   workflow does that.
-7. **Retry, then repair, up to 3 times.** If a step fails, fix the root cause
-   and retry. After 3 attempts, stop, post an honest failure summary, and do
-   not claim completion.
+3. **Deterministic pipeline.** Drive IDEA → PLAN → SCAFFOLD → TESTGEN → BUILD
+   through `tools/fastlane/*` CLIs. Never hand-write specs or hand-scaffold the
+   project; the engine is reproducible.
+4. **Design before code.** `scaffold.py` writes `DESIGN.md` + `PLAN.md` before
+   any source; enrich, never contradict, the machine-readable spec.
+5. **Lightweight default.** Prefer plain Java, Android framework views, a small
+   `minSdk`. Generated apps vendor verified modules from `modules/` as source
+   and pull no external runtime dependencies.
+6. **No TLS bypasses.** Never disable certificate checks anywhere.
+7. **Work on `main` directly.** Do NOT create feature branches or pull
+   requests. Do NOT create GitHub Releases — the CI workflow does that.
+8. **Retry, then repair, up to 3 times.** Use `tools/fastlane/repair.sh` for
+   compile failures. After 3 attempts stop, post an honest failure summary.
+9. **Never weaken quality gates.** `gates.sh` (C001–C010) and
+   `security-scan.sh` block release; do not skip or soften them to save time.
 
 ## Pipeline per request
 
-### 1. IDEA — parse the request
-Extract a short app name (slug) and the spec from the comment body. Example:
-`/app A calorie counter with barcode scanning` → slug `calorie-counter`.
-Reject/flag impossible or unsafe requests with a clear comment and stop.
-
-### 2. DESIGN (always first, before any code)
-Create `apps/<slug>/DESIGN.md` following `docs/DESIGN_TEMPLATE.md`. It MUST
-describe:
-- **Screens** (every screen with its purpose and content)
-- **Navigation** (flow between screens, back behavior)
-- **Visual style** (colors, typography, spacing, tone)
-- **Interactions** (buttons, input, gestures, feedback)
-- **App-icon concept** (symbol, colors, background treatment)
-
-Retry loop: 1 design pass, self-review against the request, fix gaps, up to 3
-passes.
-
-### 3. CODE
-Create `apps/<slug>/` as a **standalone Gradle Android project** using
-`apps/hello-appfactory/` as the reference template. Required to be real and
-buildable:
-- `settings.gradle` (+ plugin management, google()/mavenCentral())
-- `build.gradle` with `com.android.application`, `namespace`, `compileSdk`,
-  `applicationId = com.appfactory.<slug>`, `minSdk` (21 unless the spec needs
-  more), `targetSdk`, `versionCode`, `versionName`
-- Gradle wrapper (`gradlew`, `gradlew.bat`, `gradle/wrapper/*`) — copy from the
-  template if you are not sure the distribution exists
-- `src/main/AndroidManifest.xml` with a launcher activity
-- `src/main/java/...` app classes (plain Java, framework UI)
-- `src/main/res/` resources: layout(s), values (strings/colors/themes), launcher
-  icon (legacy PNG densities for API <26 + adaptive icon XML for 26+)
-- `src/test/java/...` at least one JVM unit test for pure logic
-- `release.json` — write this file inside the app dir, e.g.
-  `{"app":"<slug>","issue":<issue_number>,"request":"<one-line spec>"}`
-  (the release step and DOWNLOAD_READY comment depend on it)
-
-Constraints: keep resource/dex size small. No external dependency beyond the
-Android framework if possible. Java 17 source/target. Do not add a keystore or
-signing secrets — CI builds the debug APK it publishes.
-
-### 4. TEST
-Run unit tests:
+### 1. IDEA (App Idea Analyzer)
+Run the deterministic analyzer — it extracts slug, features, screens,
+permissions, storage, APIs, auth, media, complexity and build-time estimate:
 ```
-JAVA_HOME=$(ls -d /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk-17* 2>/dev/null | head -1)
-if [ -z "$JAVA_HOME" ]; then sudo apt-get -y install -q openjdk-17-jdk-headless; export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64; fi
-export JAVA_HOME PATH=$JAVA_HOME/bin:$PATH
-cd apps/<slug> && ./gradlew --no-daemon testDebugUnitTest
+python3 tools/fastlane/analyze.py "<full request text>" > apps/.idea.json
 ```
-(The workflow runner pre-installs a JDK; use it. Only `sudo apt install` as a
-fallback.) On test failure, fix the root cause (code or test), then re-run.
-Retry up to 3 times. Do not proceed with failing tests.
+Review the JSON; reject or flag impossible/unsafe requests with a clear
+comment and stop. Never edit the emitted slug/package or complexity by hand.
 
-### 5. LOCAL_VALIDATION
-Run `bash scripts/validate-app.sh apps/<slug>`. It checks structure, manifest,
-app id, wrapper, icon presence, resource XML well-formedness. All checks must
-pass. Repair and retry up to 3 times.
+### 2. PLAN (Planner)
+```
+python3 tools/fastlane/plan.py apps/.idea.json
+```
+Writes `apps/.architecture.json` and `apps/.PLAN.md` (modules, layers,
+database, APIs with TLS always on, permissions, security posture, testing
+plan, release gates, reproducibility pins JDK17/Gradle/AGP 8.5.2/SDK 34).
 
-### 6. GITHUB_PUSH
+### 3. SCAFFOLD (Project Generator)
+```
+python3 tools/fastlane/scaffold.py apps/.idea.json apps/.architecture.json apps/<slug>
+```
+Produces a standalone Gradle Android project: wrapper (self-contained), real
+Java sources, resources (incl. dark theme), manifest with launcher activity,
+inlined verified modules, `DESIGN.md`, `PLAN.md`, `release.json`, and JVM unit
+tests. The wrapper comes from `tools/fastlane/skel/`.
+
+Then run TESTGEN to add generated tests (never overwrites existing tests):
+```
+bash tools/fastlane/testgen.sh apps/<slug>
+```
+
+Mindfully enrich the generated app (UX, flows, module usage) but keep the
+structure and spec valid. If you add a module, add it via the plan step so it
+is vendored reproducibly. Update `release.json` with
+`"issue":<issue_number>` and `"request":"<one-line spec>"`.
+
+### 4. LOCAL_VALIDATION
+```
+bash scripts/validate-app.sh apps/<slug>
+```
+It checks structure, manifest, app id, wrapper, icon presence, resource XML
+well-formedness. All checks must pass. Use `repair.sh` budgets; retry up to 3.
+
+### 5. GITHUB_PUSH
 Commit design + code together with `Apps built by the AppFactory engine
 (<issue_number>)` in the message body and push to `main`. The runner does not
 persist git credentials, so authenticate explicitly with the workflow token
@@ -92,45 +84,43 @@ git -c user.name="opencode-agent" -c user.email="opencode-agent[bot]@users.norep
   commit -m "Add <slug>: <short spec> (issue #<n>)"
 git push origin main
 ```
-Confirm the push actually succeeded (`git fetch origin main` or `git status`
-shows you are up to date) before moving on.
+Confirm the push actually succeeded before moving on.
 
-### 6.5 CI_TRIGGER
+### 6. CI_TRIGGER
 Commits pushed with the workflow token do NOT fire `on: push` workflows
 (GitHub anti-recursion), so after a successful push explicitly dispatch the
-build pipeline (the `gh` CLI falls back to `GITHUB_TOKEN` when `GH_TOKEN` is
-unset — use the same token, never print it):
+build pipeline (the `gh` CLI falls back to `GITHUB_TOKEN`):
 ```
 gh workflow run build.yml --repo "${GITHUB_REPOSITORY}" \
   --ref main -f app=<slug>
 ```
-Confirm it actually started:
+Confirm it started:
 ```
 gh run list --workflow=build.yml --limit 5
 ```
-If the dispatch fails, retry (up to 3 times) before moving on. Do NOT create a
-GitHub Release — `build.yml` does that and will post `DOWNLOAD_READY` on the
-issue.
+Retry up to 3 times if the dispatch fails. Do NOT create a GitHub Release —
+CI does that and posts `DOWNLOAD_READY` on the issue.
 
 ### 7. Final comment
 Post a concise completion comment on the issue: app name, `apps/<slug>`, what
-was implemented (screens/nav), that CI (`build.yml`) is now building/verifying
-the APK, and that a `DOWNLOAD_READY` link will appear here shortly. If you
-exhausted all 3 retries, post an honest failure summary with the exact error
-and stop.
+was implemented (screens/nav), that CI (`build.yml`) is now building the APK
+through Fast Lane (estimates, gates, security, telemetry), and that a
+`DOWNLOAD_READY` link will appear here. If you exhausted all 3 retries, post an
+honest failure summary with the exact error and stop.
 
 ## Tools available to you
-Normal shell, `git`, GitHub CLI (`gh`) authenticated with the workflow token
-(`GITHUB_TOKEN` env, used as `GH_TOKEN` fallback), and Android SDK tooling if
-present on the runner. Use them; do not hand-wave.
+Normal shell, `git`, GitHub CLI (`gh`) authenticated with the workflow token,
+Python 3, and the Fast Lane engine under `tools/fastlane/`
+(`analyze.py`, `plan.py`, `scaffold.py`, `testgen.sh`, `build.sh`,
+`build-all.sh`, `repair.sh`, `gates.sh`, `security-scan.sh`, `deps.sh`,
+`perf.sh`, `estimate.sh`, `telemetry.sh`, `regression.sh`, `selftest.sh`).
 
 ## Definition of done
-- `DESIGN.md` exists and covers all five required areas.
-- Project is a real, standalone, buildable APK project (wrapper committed).
-- `validate-app.sh` passes; unit tests pass.
+- `apps/<slug>/` scaffolded by the engine (spec, architecture, DESIGN.md,
+  PLAN.md present; wrapper committed).
+- `validate-app.sh` passes; unit tests pass; generated tests included.
 - `release.json` written with issue number and request.
 - Committed and pushed to `main`.
-- `build.yml` (the file is `.github/workflows/build.yml`) dispatched via
-  `gh workflow run build.yml` and confirmed running (so CI fires even though
-  the token-pushed commit does not trigger `on: push`).
+- CI dispatched via `gh workflow run build.yml -f app=<slug>` and confirmed
+  running.
 - Stated clearly that a release link will follow from CI.

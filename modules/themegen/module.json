@@ -1,0 +1,12 @@
+{
+  "id": "themegen",
+  "name": "Theme & Dark Mode",
+  "version": "1.0.0",
+  "license": "MIT",
+  "description": "Deterministic color palettes, WCAG-aware contrast utilities and theme-mode resolution. Pure JVM.",
+  "android_framework": "none (pure JVM)",
+  "requires": [],
+  "compatibility": {"jdk": "11+", "android_api": 21},
+  "jvm_testable": true,
+  "tests": ["unit"]
+}

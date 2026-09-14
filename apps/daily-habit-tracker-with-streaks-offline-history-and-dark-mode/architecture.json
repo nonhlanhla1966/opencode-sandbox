@@ -1,0 +1,126 @@
+{
+ "apis": [
+  {
+   "auth": "none",
+   "name": "openai-compatible",
+   "tls_bypass": false,
+   "transport": "https"
+  }
+ ],
+ "application_id": "com.appfactory.daily-habit-tracker-with-streaks-offline-history-and-dark-mode",
+ "archetype": "list-form",
+ "database": {
+  "engine": "sqlite",
+  "entities": [
+   {
+    "fields": "text, timestamp",
+    "name": "habit tracker"
+   },
+   {
+    "fields": "text, timestamp",
+    "name": "offline-first"
+   }
+  ],
+  "versioned_migrations": true
+ },
+ "layers": [
+  "ui",
+  "logic",
+  "persistence",
+  "network"
+ ],
+ "module_compat": {
+  "http-rest": {
+   "api": 21,
+   "level": "ONLINE",
+   "test": "unit+api"
+  },
+  "json": {
+   "api": 21,
+   "level": "OFFLINE",
+   "test": "unit"
+  },
+  "settings": {
+   "api": 21,
+   "level": "OFFLINE",
+   "test": "unit"
+  },
+  "storage-sqlite": {
+   "api": 21,
+   "level": "OFFLINE",
+   "test": "unit+db"
+  },
+  "text": {
+   "api": 21,
+   "level": "OFFLINE",
+   "test": "unit"
+  },
+  "time": {
+   "api": 21,
+   "level": "OFFLINE",
+   "test": "unit"
+  },
+  "validation": {
+   "api": 21,
+   "level": "OFFLINE",
+   "test": "unit"
+  }
+ },
+ "modules": [
+  "storage-sqlite",
+  "http-rest",
+  "json",
+  "text",
+  "validation",
+  "time",
+  "settings"
+ ],
+ "name": "Daily habit tracker with streaks, offline history and dark mode",
+ "permissions": [],
+ "release": {
+  "artifact": "debug APK",
+  "signing": "CI debug-signed APK (installable, unsigned=false)",
+  "verify": [
+   "compile",
+   "unit tests",
+   "lint",
+   "resource/XML",
+   "manifest",
+   "security scan",
+   "apk badging",
+   "apksigner verify",
+   "sha256"
+  ]
+ },
+ "reproducible": {
+  "agp": "8.5.2",
+  "gradle": "8.7 wrapper (or later pinned)",
+  "jdk": "17 (Temurin)",
+  "kotlin": "n/a (Java-first)",
+  "sdk": "compileSdk 34"
+ },
+ "security": {
+  "allow_backup": false,
+  "api_keys": "never hardcoded; user-supplied via Settings, stored encrypted",
+  "exported_components": "only launcher exported",
+  "logging": "no secrets in logs",
+  "tls": "always-on certificate validation"
+ },
+ "testing": {
+  "api": true,
+  "database": true,
+  "none": false,
+  "ui_smoke": true,
+  "unit": true
+ },
+ "ui": {
+  "min_sdk": 21,
+  "nav": "List->Detail navigation with a Settings screen reachable from the toolbar; system back returns Home.",
+  "screens": [
+   "Home",
+   "List",
+   "Stats"
+  ],
+  "theme": "Material-ish, dark-mode aware (system), system fonts"
+ }
+}

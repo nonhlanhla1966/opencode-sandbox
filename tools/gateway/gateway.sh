@@ -2,8 +2,9 @@
 # gateway.sh — AppFactory Remote Gateway (ChatGPT/MCP control plane).
 #
 # Thin JSON front-end over the EXISTING, already-proven AppFactory pipeline
-# (issue -> /oc -> opencode.yml engine -> apps/<slug> -> build.yml ->
-# app-<slug>-latest release with APK + SHA256SUMS -> DOWNLOAD_READY comment).
+# (issue -> /oc -> opencode.yml engine -> apps/<slug> -> Fast Lane build in
+# build.yml -> app-<slug>-latest release with APK + SHA256SUMS ->
+# DOWNLOAD_READY comment).
 #
 # Commands (JSON in/out, nothing secret ever printed):
 #   create_app_request  "<one-line app idea>"   -> creates factory issue (+/oc)

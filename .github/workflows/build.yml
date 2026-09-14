@@ -3,7 +3,7 @@ name: appfactory-build
 on:
   push:
     branches: [main]
-    paths: ['apps/**', 'scripts/**', '.github/workflows/build.yml']
+    paths: ['apps/**', 'scripts/**', 'tools/fastlane/**', 'modules/**', 'modules/DEPENDENCY_REGISTRY.json', '.github/workflows/build.yml']
   workflow_dispatch:
     inputs:
       app:
@@ -18,6 +18,10 @@ concurrency:
 permissions:
   contents: write
   issues: write
+
+env:
+  GRADLE_USER_HOME: ${{ github.workspace }}/.gradle-home
+  FL_CONFIG_CACHE: '1'
 
 jobs:
   build:
@@ -37,6 +41,9 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Set up Gradle (cached)
+        uses: gradle/actions/setup-gradle@v4
+
       - name: Collect app directories
         id: apps
         run: |
@@ -45,28 +52,22 @@ jobs:
           else
             APPS=""
             for d in apps/*/; do
-              [ -d "$d" ] && APPS="$APPS $(basename "$d")"
+              [ -f "$d/build.gradle" ] && APPS="$APPS $(basename "$d")"
             done
           fi
           APPS="$(echo $APPS | xargs -n1 | sort -u | xargs)"
           echo "apps=[$APPS]"
           echo "APPS=$APPS" >> "$GITHUB_ENV"
 
-      - name: Test apps (JVM unit tests, auto-repair with 3x retries)
+      - name: Fast Lane engine selftest (no SDK needed)
         run: |
-          for app in $APPS; do
-            echo "== TEST $app"
-            ( cd "apps/$app" && bash ../../scripts/retry.sh 3 ./gradlew --no-daemon testDebugUnitTest --stacktrace )
-          done
+          bash tools/fastlane/selftest.sh
 
-      - name: Build debug APKs (retry up to 3)
+      - name: Fast Lane build (estimate + compile + tests + gates + security + verify)
         run: |
-          for app in $APPS; do
-            echo "== BUILD $app"
-            ( cd "apps/$app" && bash ../../scripts/retry.sh 3 ./gradlew --no-daemon assembleDebug --stacktrace )
-          done
+          bash tools/fastlane/build-all.sh --apps "$APPS" -j 2
 
-      - name: Verify APKs and publish Releases (retry up to 3)
+      - name: Publish Releases (rolling app-<slug>-latest)
         id: publish
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -74,13 +75,15 @@ jobs:
           rows_file="$(mktemp)"
           for app in $APPS; do
             apk="$(bash scripts/find-apk.sh "apps/$app")"
-            appid=$(sed -n "s/.*applicationId[[:space:]]*[\"']\([^\"']*\)[\"'].*/\1/p" "apps/$app/build.gradle" | head -1)
-            ver=$(sed -n "s/.*versionName[[:space:]]*[\"']\([^\"']*\)[\"'].*/\1/p" "apps/$app/build.gradle" | head -1)
             issue=$(python3 -c "import json;print(json.load(open('apps/$app/release.json')).get('issue') or 0)" 2>/dev/null || echo 0)
-            echo "== VERIFY $app (id=$appid ver=${ver:-?} issue=${issue:-0})"
-            bash scripts/retry.sh 3 bash scripts/verify-apk.sh "$apk" "$appid" "${ver:-}"
-            url=$(bash scripts/release.sh "apps/$app" | sed -n 's/^release-url=//p')
-            echo "== RELEASED $app -> $url"
+            if [ -n "$apk" ] && [ -f "$apk" ]; then
+              echo "== RELEASE $app (issue=${issue:-0})"
+              url=$(bash scripts/release.sh "apps/$app" | sed -n 's/^release-url=//p')
+              echo "== RELEASED $app -> $url"
+            else
+              url=""
+              echo "== NO APK for $app"
+            fi
             echo "$app|$issue|$url" >> "$rows_file"
           done
           {
@@ -101,7 +104,11 @@ jobs:
           while IFS='|' read -r app issue url; do
             [ -n "$app" ] || continue
             if [ "${issue:-0}" -gt 0 ] 2>/dev/null; then
-              msg="DOWNLOAD_READY — **$app** is built, verified and released. Direct APK download: $url (SHA-256 checksum in the release)."
+              if [ -n "$url" ]; then
+                msg="DOWNLOAD_READY — **$app** is built, verified and released. Direct APK download: $url (SHA-256 checksum in the release)."
+              else
+                msg="BUILD_FAILED — **$app** did not produce a verified APK this run."
+              fi
               bash scripts/note.sh "$issue" "$msg" || true
             else
               echo "no requesting issue for $app (skip comment)"
@@ -119,7 +126,8 @@ jobs:
               if [ -n "$apk" ] && [ -f "$apk" ]; then
                 sz=$(du -h "$apk" | cut -f1)
                 apk_name="$(basename "$apk")"
-                echo "- **$app**: APK OK ($sz) — release: https://github.com/${{ github.repository }}/releases/download/app-$app-latest/$apk_name"
+                sha=$(sha256sum "$apk" | awk '{print $1}')
+                echo "- **$app**: APK OK ($sz) sha256:\`${sha:0:12}…\` — release: https://github.com/${{ github.repository }}/releases/download/app-$app-latest/$apk_name"
               else
                 echo "- **$app**: NO APK"
               fi

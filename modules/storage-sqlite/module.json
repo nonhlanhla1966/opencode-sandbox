@@ -1,0 +1,13 @@
+{
+  "id": "storage-sqlite",
+  "name": "SQLite Storage",
+  "version": "1.0.0",
+  "license": "MIT",
+  "description": "Versioned schema migrations + typed table builder. Pure core is JVM-tested; Android glue (SQLiteOpenHelper) included for API 21+.",
+  "android_framework": "partial (core pure JVM; SqliteStore glue uses android.database.sqlite)",
+  "requires": [],
+  "compatibility": {"jdk": "11+", "android_api": 21, "kotlin": "n/a"},
+  "jvm_testable": true,
+  "tests": ["unit", "db"],
+  "usage": "offline-first and notes/todo/inventory apps."
+}
