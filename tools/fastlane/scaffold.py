@@ -411,6 +411,7 @@ def colors_xml(pal):
         <color name="bg_dark">{pal['bg_dark']}</color>
         <color name="text_light">{pal['text_light']}</color>
         <color name="text_dark">{pal['text_dark']}</color>
+        <color name="ic_launcher_background">#FF1B5E20</color>
     </resources>
     """)
 
