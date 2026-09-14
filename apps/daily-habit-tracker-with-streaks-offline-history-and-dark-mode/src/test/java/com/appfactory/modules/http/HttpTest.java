@@ -1,4 +1,4 @@
-package com.appfactory.modules.http-rest;
+package com.appfactory.modules.http;
 
 import org.junit.Test;
 import java.util.Map;

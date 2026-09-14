@@ -82,13 +82,14 @@ def copy_modules(slug, mods, out_root):
                 shutil.copy2(java, pkg_dir / java.name)
         test_dir = MOD_DIR / mod_id / "test"
         if test_dir.is_dir():
+            mod_pkg = re.sub(r"[^A-Za-z0-9_]", "_", mod_id)  # java-safe segment
             test_pkg = out_root
-            for p in ["src","test","java"] + parts + [mod_id]:
+            for p in ["src","test","java"] + parts + [mod_pkg]:
                 test_pkg = test_pkg / p
             test_pkg.mkdir(parents=True, exist_ok=True)
             for java in test_dir.glob("*.java"):
                 content = java.read_text()
-                new_package = f"{MODULE_PKG}.{mod_id}"
+                new_package = f"{MODULE_PKG}.{mod_pkg}"
                 content = re.sub(r'^package\s+[\w.]+;',
                                  f'package {new_package};', content)
                 content = re.sub(r'import\s+com\.appfactory\.modules\.([\w]+)\.',
