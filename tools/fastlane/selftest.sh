@@ -58,6 +58,11 @@ bash "$REPO_ROOT/scripts/validate-app.sh" "$appdir" >/dev/null 2>&1 \
   && t "scaffolded app passes validate-app" || f "validate-app fails on scaffold"
 [ -e "$appdir/src/main/java/com/appfactory/modules/json/Json.java" ] \
   && t "scaffold inlined json module" || f "json module not inlined"
+if grep -rq "0xFF" "$appdir/src/main/res" --include="colors.xml" 2>/dev/null; then
+  f "scaffold colors use JS 0x hex (aapt2 rejects)"
+else
+  t "scaffold colors use android # hex"
+fi
 
 echo "== 4. Build-time estimation =="
 est="$($FL_ROOT/estimate.sh compute "$spec" 2>/dev/null)"

@@ -36,13 +36,13 @@ def esc(s):
 def hash_palette(seed):
     h = hashlib.md5(seed.encode()).hexdigest()
     return {
-        "primary":   "0xFF"+h[0:6],
-        "secondary": "0xFF"+h[6:12],
-        "accent":    "0xFF"+h[12:18],
-        "bg_light":  "0xFFFAFAFA",
-        "bg_dark":   "0xFF121212",
-        "text_light":"0xFF212121",
-        "text_dark": "0xFFE0E0E0",
+        "primary":   "#FF"+h[0:6],
+        "secondary": "#FF"+h[6:12],
+        "accent":    "#FF"+h[12:18],
+        "bg_light":  "#FFFAFAFA",
+        "bg_dark":   "#FF121212",
+        "text_light":"#FF212121",
+        "text_dark": "#FFE0E0E0",
     }
 
 def ensure_dir(p):
