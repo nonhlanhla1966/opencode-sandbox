@@ -17,7 +17,7 @@ account, no ads, no subscriptions, no payments. Designed first for Android
 |--------|---------|------------------------|
 | Chat (Home, launcher) | Main chat experience: run and read conversations | Header (app title "OpenCode Chatbot", New Chat, Conversations, Settings), active conversation title, scrollable message list (user/assistant/error bubbles), message composer (multiline `EditText`, Send, Stop-while-generating), empty state prompting to start a chat |
 | Conversations | List, open, rename, delete, search, organize all conversations | Title + back, search field, `ListView` of conversations (title, preview, updated date; active marked), "Delete all" action, empty state |
-| Settings | Configure the AI provider, model, theme, data management | Provider form: provider preset spinner, provider name, API endpoint, API key (masked, toggle), model, temperature, max tokens, system prompt; theme toggle (light/dark/system); data actions: export conversations, import conversations, clear API keys, clear all conversations; About link |
+| Settings | Configure the AI provider, model, theme, data management | Provider form: provider preset spinner, provider name, API endpoint, API key (masked, toggle), model + **Fetch models** (queries the endpoint's `/models` list and lets you pick the models the provider actually serves), temperature, max tokens, system prompt; theme toggle (light/dark/system); data actions: export conversations, import conversations, clear API keys, clear all conversations; About link |
 | About | Credits, version, security notes | App name, version, short description (open-source, local-first, keys never leave the chosen endpoint), Back button |
 
 - **Empty states**: fresh app → chat area shows "Start a new chat below"; no

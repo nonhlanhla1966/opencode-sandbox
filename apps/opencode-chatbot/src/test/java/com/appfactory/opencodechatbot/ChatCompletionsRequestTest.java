@@ -17,7 +17,7 @@ import java.util.Map;
 public class ChatCompletionsRequestTest {
 
     private ProviderConfig config() {
-        return new ProviderConfig("test", "https://example.com/v1", "", "opencode/big-pickle", 0.8f, 2048);
+        return new ProviderConfig("test", "https://example.com/v1", "", "big-pickle", 0.8f, 2048);
     }
 
     @Test
@@ -25,7 +25,7 @@ public class ChatCompletionsRequestTest {
         List<Message> messages = new ArrayList<>();
         messages.add(Message.user("Hi"));
         Map<String, Object> body = ChatCompletionsRequest.buildBody(config(), messages, "", true);
-        assertEquals("opencode/big-pickle", body.get("model"));
+        assertEquals("big-pickle", body.get("model"));
         assertEquals(Boolean.TRUE, body.get("stream"));
         assertEquals(0.8f, ((Number) body.get("temperature")).floatValue(), 0.001f);
         assertEquals(2048, body.get("max_tokens"));

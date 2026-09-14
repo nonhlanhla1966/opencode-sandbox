@@ -18,10 +18,13 @@ import com.appfactory.opencodechatbot.data.ConversationStore;
 import com.appfactory.opencodechatbot.data.SettingsValidator;
 import com.appfactory.opencodechatbot.provider.ProviderConfig;
 import com.appfactory.opencodechatbot.provider.ProviderConfig.Preset;
+import com.appfactory.opencodechatbot.provider.ModelsFetcher;
 import com.appfactory.opencodechatbot.util.AppTheme;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 /** Settings: provider config, model/temperature/tokens, theme, data tools. */
 public final class SettingsActivity extends Activity {
@@ -107,6 +110,13 @@ public final class SettingsActivity extends Activity {
             }
         });
 
+        findViewById(R.id.btn_fetch_models).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                fetchModels();
+            }
+        });
+
         findViewById(R.id.btn_export).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -148,6 +158,60 @@ public final class SettingsActivity extends Activity {
         if (preset.model != null && !preset.model.isEmpty()) {
             etModel.setText(preset.model);
         }
+    }
+
+    /**
+     * Query the configured endpoint's OpenAI-compatible /models list and let
+     * the user pick one of the models the provider actually serves. The API key
+     * is used only in the outgoing Authorization header and is never logged.
+     */
+    private void fetchModels() {
+        String endpoint = etEndpoint.getText().toString().trim();
+        if (!SettingsValidator.isValidEndpoint(endpoint)) {
+            Toast.makeText(this, R.string.invalid_endpoint, Toast.LENGTH_LONG).show();
+            return;
+        }
+        final String base = endpoint;
+        final String apiKey = etApiKey.getText().toString().trim();
+        final Button btn = findViewById(R.id.btn_fetch_models);
+        btn.setEnabled(false);
+        final Thread task = new Thread(() -> {
+            final List<String> models;
+            final String error;
+            try {
+                models = ModelsFetcher.fetch(base, apiKey);
+                error = null;
+            } catch (Exception e) {
+                models = null;
+                error = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+            }
+            runOnUiThread(() -> {
+                btn.setEnabled(true);
+                if (models == null) {
+                    Toast.makeText(SettingsActivity.this,
+                            getString(R.string.fetch_models_failed, error), Toast.LENGTH_LONG).show();
+                    return;
+                }
+                if (models.isEmpty()) {
+                    Toast.makeText(SettingsActivity.this,
+                            R.string.fetch_models_empty, Toast.LENGTH_LONG).show();
+                    return;
+                }
+                showModelsDialog(models);
+            });
+        });
+        task.start();
+    }
+
+    private void showModelsDialog(final List<String> models) {
+        final List<String> sorted = new ArrayList<>(models);
+        java.util.Collections.sort(sorted);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.fetch_models_title);
+        builder.setItems(sorted.toArray(new String[0]), (dialog, which) ->
+                etModel.setText(sorted.get(which)));
+        builder.setNegativeButton(R.string.action_cancel, null);
+        builder.show();
     }
 
     private int themeIndex() {

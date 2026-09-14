@@ -108,12 +108,12 @@ public final class ProviderConfig {
     private static final List<Preset> PRESETS = new ArrayList<Preset>();
 
     static {
-        // Big Pickle / OpenCode-compatible: pre-fills the model identifier
-        // typical of the OpenCode/opencode family. The endpoint and API key are
-        // NOT preset — they always come from the user's settings (the user
-        // points this preset at their own OpenAI-compatible gateway/codex
-        // endpoint). No credentials are ever hard-coded.
-        PRESETS.add(new Preset("OpenCode / Big Pickle", "", "opencode/big-pickle"));
+        // Big Pickle via OpenCode Zen: the OpenAI-compatible gateway. The raw
+        // HTTP API expects the bare model id "big-pickle" (the "opencode/"
+        // prefix is only used inside the OpenCode client's own config, not in
+        // the /v1/chat/completions request body). The API key is NOT preset —
+        // it always comes from the user's settings and is never hard-coded.
+        PRESETS.add(new Preset("OpenCode Zen (Big Pickle)", "https://opencode.ai/zen/v1", "big-pickle"));
         PRESETS.add(new Preset("OpenAI", "https://api.openai.com/v1", "gpt-3.5-turbo"));
         PRESETS.add(new Preset("OpenRouter", "https://openrouter.ai/api/v1", "openrouter/auto"));
         PRESETS.add(new Preset("Local (LM Studio)", "http://127.0.0.1:1234/v1", "local-model"));

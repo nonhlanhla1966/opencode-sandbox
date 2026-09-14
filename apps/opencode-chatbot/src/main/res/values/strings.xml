@@ -53,6 +53,10 @@
     <string name="action_hide_key">Hide</string>
     <string name="label_model">Model</string>
     <string name="hint_model">gpt-3.5-turbo</string>
+    <string name="action_fetch_models">Fetch models</string>
+    <string name="fetch_models_title">Select model</string>
+    <string name="fetch_models_failed">Could not fetch models: %1$s</string>
+    <string name="fetch_models_empty">This endpoint returned no models.</string>
     <string name="label_temperature">Temperature</string>
     <string name="label_max_tokens">Max tokens</string>
     <string name="label_system_prompt">System prompt</string>
