@@ -176,28 +176,28 @@ public final class SettingsActivity extends Activity {
         final Button btn = findViewById(R.id.btn_fetch_models);
         btn.setEnabled(false);
         final Thread task = new Thread(() -> {
-            final List<String> models;
-            final String error;
+            List<String> models = null;
+            String error = null;
             try {
                 models = ModelsFetcher.fetch(base, apiKey);
-                error = null;
             } catch (Exception e) {
-                models = null;
                 error = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
             }
+            final List<String> fetched = models;
+            final String fetchError = error;
             runOnUiThread(() -> {
                 btn.setEnabled(true);
-                if (models == null) {
+                if (fetched == null) {
                     Toast.makeText(SettingsActivity.this,
-                            getString(R.string.fetch_models_failed, error), Toast.LENGTH_LONG).show();
+                            getString(R.string.fetch_models_failed, fetchError), Toast.LENGTH_LONG).show();
                     return;
                 }
-                if (models.isEmpty()) {
+                if (fetched.isEmpty()) {
                     Toast.makeText(SettingsActivity.this,
                             R.string.fetch_models_empty, Toast.LENGTH_LONG).show();
                     return;
                 }
-                showModelsDialog(models);
+                showModelsDialog(fetched);
             });
         });
         task.start();
