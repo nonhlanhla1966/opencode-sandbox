@@ -63,6 +63,16 @@ if grep -rq "0xFF" "$appdir/src/main/res" --include="colors.xml" 2>/dev/null; th
 else
   t "scaffold colors use android # hex"
 fi
+missing=0
+for ref in $(grep -rhoE "@(color|drawable|string|mipmap)/[a-z_]+" "$appdir/src/main/res/mipmap-anydpi-v26" 2>/dev/null | sort -u); do
+  name="${ref##*/}"
+  case "$ref" in
+    *color*) grep -q "<color name=\"$name\"" "$appdir/src/main/res/values/colors.xml" 2>/dev/null || missing=1;;
+    *drawable*) [ -f "$appdir/src/main/res/drawable/$name.xml" ] || missing=1;;
+    *string*) grep -q "<string name=\"$name\"" "$appdir/src/main/res/values/strings.xml" 2>/dev/null || missing=1;;
+  esac
+done
+[ "$missing" -eq 0 ] && t "scaffold launcher-icon refs resolve" || f "scaffold launcher-icon refs unresolved"
 
 echo "== 4. Build-time estimation =="
 est="$($FL_ROOT/estimate.sh compute "$spec" 2>/dev/null)"
