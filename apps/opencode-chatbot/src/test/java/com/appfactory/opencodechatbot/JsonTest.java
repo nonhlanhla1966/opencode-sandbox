@@ -27,7 +27,7 @@ public class JsonTest {
         String json = Json.stringify(obj);
         Object parsed = Json.parse(json);
         assertNotNull(parsed);
-        assert parsesAreEqual(obj, Json.parseObject(json));
+        assertEquals(obj, Json.parseObject(json));
     }
 
     @Test
@@ -66,10 +66,5 @@ public class JsonTest {
     public void parsesLeadingWhitespace() {
         Object v = Json.parse("   {\"ok\":true}   ");
         assertNotNull(v);
-    }
-
-    private static Object parsesAreEqual(Object expected, Object actual) {
-        assertEquals(expected, actual);
-        return actual;
     }
 }
