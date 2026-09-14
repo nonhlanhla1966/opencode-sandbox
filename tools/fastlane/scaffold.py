@@ -59,42 +59,47 @@ def chmod_x(path):
 # ---- module copier ----------------------------------------------------------- #
 MODULE_PKG = "com.appfactory.modules"
 
+def module_pkg_segment(mod_id):
+    """Java package segment a module actually declares (modules are allowed to
+    live in a dir whose name differs from the package, e.g. storage-sqlite ->
+    storage_sqlite, notifications -> notify)."""
+    for base in ("src", "test", "android"):
+        d = MOD_DIR / mod_id / base
+        if d.is_dir():
+            for f in sorted(d.glob("*.java")):
+                m = re.search(r"^package\s+([\w.]+);", f.read_text(), re.M)
+                if m:
+                    return m.group(1).split(".")[-1]
+    return re.sub(r"[^A-Za-z0-9_]", "_", mod_id)
+
 def copy_modules(slug, mods, out_root):
-    """Copy module src + tests into the generated app. Each module's src goes
-    into src/main/java/com/appfactory/modules/<mod_id>/ and tests into
-    src/test/java/..."""
+    """Copy module src + tests into the generated app. Files are copied
+    verbatim (packages/imports are already authored to be self-consistent) and
+    placed under the package they declare; the directory layout is cosmetic."""
     parts = MODULE_PKG.split(".")
     for mod_id in mods:
         src_dir = MOD_DIR / mod_id / "src"
         if not src_dir.is_dir():
             continue
+        pkg_seg = module_pkg_segment(mod_id)
         pkg_dir = out_root
-        for p in ["src","main","java"] + parts + [mod_id]:
+        for p in ["src","main","java"] + parts + [pkg_seg]:
             pkg_dir = pkg_dir / p
         pkg_dir.mkdir(parents=True, exist_ok=True)
         for java in src_dir.glob("*.java"):
             shutil.copy2(java, pkg_dir / java.name)
-        # Android glue (optional): module/android/*.java compiled only inside the
-        # generated Android project, never in the pure-JVM test harness.
         android_dir = MOD_DIR / mod_id / "android"
         if android_dir.is_dir():
             for java in android_dir.glob("*.java"):
                 shutil.copy2(java, pkg_dir / java.name)
         test_dir = MOD_DIR / mod_id / "test"
         if test_dir.is_dir():
-            mod_pkg = re.sub(r"[^A-Za-z0-9_]", "_", mod_id)  # java-safe segment
             test_pkg = out_root
-            for p in ["src","test","java"] + parts + [mod_pkg]:
+            for p in ["src","test","java"] + parts + [pkg_seg]:
                 test_pkg = test_pkg / p
             test_pkg.mkdir(parents=True, exist_ok=True)
             for java in test_dir.glob("*.java"):
-                content = java.read_text()
-                new_package = f"{MODULE_PKG}.{mod_pkg}"
-                content = re.sub(r'^package\s+[\w.]+;',
-                                 f'package {new_package};', content)
-                content = re.sub(r'import\s+com\.appfactory\.modules\.([\w]+)\.',
-                                 rf'import {MODULE_PKG}.\1.', content)
-                (test_pkg / java.name).write_text(content)
+                shutil.copy2(java, test_pkg / java.name)
 
 # ---- manifest --------------------------------------------------------------- #
 def manifest_xml(spec, arch):

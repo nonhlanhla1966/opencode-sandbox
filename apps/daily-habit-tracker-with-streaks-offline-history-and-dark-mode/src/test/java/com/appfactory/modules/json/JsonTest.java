@@ -7,7 +7,7 @@ import static org.junit.Assert.*;
 public class JsonTest {
     @Test public void parsesNestedObject() {
         JsonObject o = Json.parseObject("{\"a\":{\"b\":[1,2,3],\"c\":\"x\"},\"n\":null}");
-        assertEquals(2, o.getArray("a").getInt(1, -1));
+        assertEquals(2, o.getObject("a").getArray("b").getInt(1, -1));
         assertEquals("x", o.getObject("a").getString("c"));
         assertTrue(o.has("n"));
     }

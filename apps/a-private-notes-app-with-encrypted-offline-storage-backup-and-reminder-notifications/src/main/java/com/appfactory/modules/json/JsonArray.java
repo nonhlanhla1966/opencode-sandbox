@@ -22,9 +22,15 @@ public final class JsonArray {
         Object v = raw.get(idx);
         return v == null ? null : String.valueOf(v);
     }
-    public long getLong(int idx, long def) {
+public long getLong(int idx, long def) {
         Object v = raw.get(idx);
-        return v instanceof Number ? ((Number) v).longValue() : def;
+        if (v instanceof Number) return ((Number) v).longValue();
+        return def;
+    }
+    public int getInt(int idx, int def) {
+        Object v = raw.get(idx);
+        if (v instanceof Number) return ((Number) v).intValue();
+        return def;
     }
     public double getDouble(int idx, double def) {
         Object v = raw.get(idx);
