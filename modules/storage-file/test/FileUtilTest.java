@@ -14,8 +14,12 @@ public class FileUtilTest {
             FileUtil.safeChild(new File("/tmp"), "/abs/path");
             fail("should reject absolute");
         } catch (java.io.IOException expected) { }
-        assertEquals(new File("/tmp", "ok.txt"),
-                FileUtil.safeChild(new File("/tmp"), "ok.txt"));
+        try {
+            assertEquals(new File("/tmp", "ok.txt"),
+                    FileUtil.safeChild(new File("/tmp"), "ok.txt"));
+        } catch (java.io.IOException unexpected) {
+            fail("should accept a safe child path");
+        }
     }
     @Test public void naiveContentWrite() throws Exception {
         File dir = new File("build/tmp/futil");

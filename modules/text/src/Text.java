@@ -23,7 +23,7 @@ public final class Text {
         boolean cap = true;
         for (char c : s.toCharArray()) {
             if (Character.isWhitespace(c) || c == '-') {
-                sb.append(c);
+                sb.append(c == '-' ? ' ' : c);
                 cap = true;
             } else if (cap) {
                 sb.append(Character.toUpperCase(c));

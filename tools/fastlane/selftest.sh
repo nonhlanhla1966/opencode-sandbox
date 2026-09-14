@@ -78,6 +78,18 @@ if grep -rqE "^package [^;]*-" "$appdir/src" 2>/dev/null; then
 else
   t "scaffold packages use java-safe names (no hyphens)"
 fi
+copymism=0
+for module_test in modules/*/test/*.java; do
+  [ -f "$module_test" ] || continue
+  mt=$(basename "$module_test")
+  pkg=$(grep -m1 '^package ' "$module_test" | sed -E 's/package[[:space:]]+([^;]+);/\1/')
+  copy="$appdir/src/test/java/$(echo "$pkg" | tr '.' '/')/$mt"
+  if [ -f "$copy" ] && ! cmp -s "$module_test" "$copy"; then
+    copymism=1
+  fi
+done
+[ "$copymism" -eq 0 ] && t "scaffold copies module tests verbatim (packages preserved)" \
+  || f "scaffold module test copies diverge from modules/"
 
 echo "== 4. Build-time estimation =="
 est="$($FL_ROOT/estimate.sh compute "$spec" 2>/dev/null)"

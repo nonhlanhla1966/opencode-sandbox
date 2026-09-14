@@ -26,9 +26,11 @@ public final class Urls {
 
     public static String appendQuery(String url, Map<String, String> params) {
         if (params == null || params.isEmpty()) return url;
-        String q = buildQuery(params);
-        if (q.isEmpty()) return url;
-        return url + (url.contains("?") ? "&" : "?") + q;
+        int qi = url.indexOf('?');
+        if (qi < 0) return url + "?" + buildQuery(params);
+        Map<String, String> merged = params(url.substring(qi + 1));
+        merged.putAll(params); // new values win; never duplicate existing keys
+        return url.substring(0, qi) + "?" + buildQuery(merged);
     }
 
     /** Validate origin-like URL and forbid non-https unless explicitly allowed. */

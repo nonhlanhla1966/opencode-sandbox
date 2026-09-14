@@ -1,4 +1,4 @@
-package com.appfactory.modules.notifications;
+package com.appfactory.modules.notify;
 
 import org.junit.Test;
 import java.util.Map;

@@ -4,14 +4,20 @@ import org.junit.Test;
 import java.util.List;
 import static org.junit.Assert.*;
 import static com.appfactory.modules.storage_sqlite.Schema.Type.*;
+import com.appfactory.modules.storage_sqlite.Migrations.Migration;
 
 public class StorageSqliteTest {
 
     @Test public void tableDdl() {
-        Schema.Table t = () -> new Schema.Column[] {
-            new Schema.Column("id", INTEGER).primaryKey().autoIncrement(),
-            new Schema.Column("title", TEXT).notNull(),
-            new Schema.Column("detail", TEXT)
+        Schema.Table t = new Schema.Table() {
+            public String name() { return "items"; }
+            public Schema.Column[] columns() {
+                return new Schema.Column[] {
+                    new Schema.Column("id", INTEGER).primaryKey().autoIncrement(),
+                    new Schema.Column("title", TEXT).notNull(),
+                    new Schema.Column("detail", TEXT)
+                };
+            }
         };
         String sql = t.createSql();
         assertTrue(sql.startsWith("CREATE TABLE IF NOT EXISTS"));
@@ -22,8 +28,8 @@ public class StorageSqliteTest {
 
     @Test public void indexDdl() {
         Schema.Index idx = new Schema.Index("idx_items_title", "items", false, "title", "detail");
-        assertEquals("CREATE  INDEX IF NOT EXISTS idx_items_title ON items(title,detail)",
-                idx.sql().replace("CREATE  INDEX", "CREATE INDEX"));
+        assertEquals("CREATE INDEX IF NOT EXISTS idx_items_title ON items(title,detail)",
+                idx.sql());
     }
 
     @Test public void migrationPlanAcrossVersions() {

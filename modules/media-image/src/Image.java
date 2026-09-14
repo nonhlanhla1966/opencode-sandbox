@@ -27,7 +27,7 @@ public final class Image {
     /** Power-of-two sample size that keeps the decoded image under maxPx. */
     public static int sampleSize(int width, int height, int maxPx) {
         int sample = 1;
-        while (width / (sample * 2) > maxPx || height / (sample * 2) > maxPx) {
+        while (width / sample > maxPx || height / sample > maxPx) {
             sample *= 2;
         }
         return sample;

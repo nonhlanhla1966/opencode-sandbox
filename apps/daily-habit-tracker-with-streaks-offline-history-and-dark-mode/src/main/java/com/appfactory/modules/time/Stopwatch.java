@@ -29,7 +29,9 @@ public final class Stopwatch {
         long h = totalSec / 3600, m = (totalSec % 3600) / 60, s = totalSec % 60;
         StringBuilder sb = new StringBuilder();
         if (h > 0) sb.append(h).append("h ");
-        if (m > 0 || h > 0) sb.append(String.format("%02d", m)).append("m ");
+        if (m > 0 || h > 0) {
+            sb.append(h > 0 ? String.format("%02d", m) : String.valueOf(m)).append("m ");
+        }
         String suffix = (h > 0 || m > 0) ? String.format("%02d", s) : String.valueOf(s);
         sb.append(suffix).append("s");
         return sb.toString();
