@@ -129,4 +129,16 @@ jobs:
                 echo "- **$app**: NO APK"
               fi
             done
+            echo ""
+            echo "## Fast Lane 3.0"
+            acc="$(python3 tools/fastlane/accuracy.py score-all apps 2>/dev/null || echo '{}')"
+            echo '```json'
+            printf '%s\n' "$acc" | python3 -c 'import json,sys
+try:
+    d=json.load(sys.stdin)
+    for a in d.get("apps",[]):
+        print(f"{a[\"app\"]:<32} accuracy={a.get(\"accuracy_score\")}/100")
+except Exception:
+    print("no accuracy data")' || true
+            echo '```'
           } >> "$GITHUB_STEP_SUMMARY"

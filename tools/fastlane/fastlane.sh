@@ -13,6 +13,7 @@
 #   fastlane.sh testgen <app-spec.json> <app-dir>
 #   fastlane.sh build <app-dir> [--assemble-only]
 #   fastlane.sh full "<one-line idea>" [--out apps/<slug>]
+#   fastlane.sh full3 "<one-line idea>"       -> FL3.0 pipeline (checkpoints + all engines)
 #   fastlane.sh estimate <app-spec.json>
 #   fastlane.sh selftest
 set -u
@@ -68,6 +69,10 @@ estimate() {
   bash "$FL/estimate.sh" compute "${1:?usage: fastlane.sh estimate <app-spec.json>}"
 }
 
+full3() {
+  bash "$FL/fastlane3.sh" pipeline "$@"
+}
+
 selftest() {
   bash "$FL/selftest.sh" "$@"
 }
@@ -80,6 +85,7 @@ case "$cmd" in
   testgen) shift; testgen "$@";;
   build) shift; build "$@";;
   full) shift; full "$@";;
+  full3) shift; full3 "$@";;
   estimate) shift; estimate "$@";;
   selftest) selftest "${2:-}";;
   *) echo "fastlane: unknown command '$cmd'"; exit 2;;

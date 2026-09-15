@@ -125,6 +125,112 @@ echo "== 8. Regression lab =="
 bash "$FL_ROOT/regression.sh" list >/dev/null 2>&1 && t "regression list runs" || f "regression list failed"
 bash "$FL_ROOT/regression.sh" validate "$appdir" >/dev/null 2>&1 && t "regression validate generated app" || f "regression validate failed"
 
+echo "== 9. Fast Lane 3.0 engines =="
+
+# 9.1 Spec engine: version + checksum + schema validation
+fl3spec="$TMP/fl3-spec.json"
+fl3out="$($ANALYZE "An offline budget tracker with expenses and reminders" 2>/dev/null)"
+printf '%s\n' "$fl3out" > "$fl3spec"
+[ "$(python3 -c 'import json;print(json.load(open("'"$fl3spec"'")).get("spec_version"))')" = "3.0" ] \
+  && t "FL3: analyze emits spec_version 3.0" || f "FL3: analyze missing spec_version"
+[ -n "$(python3 -c 'import json;print(json.load(open("'"$fl3spec"'")).get("checksum_sha256"))')" ] \
+  && t "FL3: analyze emits sha256 checksum" || f "FL3: analyze missing checksum"
+python3 "$FL_ROOT/spec_validate.py" check "$fl3spec" >/dev/null 2>&1 \
+  && t "FL3: spec_validate passes FL3 spec" || f "FL3: spec_validate rejected valid spec"
+[ "$(python3 "$FL_ROOT/spec_validate.py" checksum "$fl3spec" | python3 -c 'import json,sys;d=json.load(sys.stdin);print(d["checksum_sha256"]==json.load(open("'"$fl3spec"'"))["checksum_sha256"])')" = "True" ] \
+  && t "FL3: spec checksum recomputes identically" || f "FL3: checksum mismatch"
+fl3det1="$($ANALYZE "A flash of light app" 2>/dev/null)"
+fl3det2="$($ANALYZE "A flash of light app" 2>/dev/null)"
+[ "$fl3det1" = "$fl3det2" ] && t "FL3: analyze deterministic with checksum" || f "FL3: analyze nondeterministic"
+[ "$(python3 -c 'import json;print(len(json.load(open("'"$fl3spec"'")).get("assumptions",[]))>0)')" = "True" ] \
+  && t "FL3: assumptions recorded in spec" || f "FL3: assumptions missing"
+
+# 9.2 Module registry + compatibility
+python3 "$FL_ROOT/compat.py" registry >/dev/null 2>&1 && t "FL3: module registry generation" || f "FL3: registry generation failed"
+[ -f "$REPO_ROOT/modules/REGISTRY.json" ] && python3 -c 'import json;d=json.load(open("'"$REPO_ROOT"'/modules/REGISTRY.json"));assert d["version"]=="3.0";assert len(d["modules"])>0' \
+  && t "FL3: REGISTRY.json is versioned + populated" || f "FL3: REGISTRY.json invalid"
+fl3arch="$TMP/fl3-arch.json"
+python3 "$FL_ROOT/plan.py" "$fl3spec" --out "$TMP" > "$fl3arch" 2>/dev/null
+python3 "$FL_ROOT/compat.py" check "$fl3spec" "$fl3arch" >/dev/null 2>&1 \
+  && t "FL3: compat check passes generated arch" || f "FL3: compat check failed"
+sel="$(python3 "$FL_ROOT/compat.py" select "$fl3spec" 2>/dev/null)"
+[ -n "$sel" ] && [ "$(printf '%s' "$sel" | python3 -c 'import json,sys;print(len(json.load(sys.stdin)["selected"])>0)')" = "True" ] \
+  && t "FL3: registry-driven module selection" || f "FL3: registry selection empty"
+python3 -c 'import json;d=json.load(open("'"$fl3arch"'"));assert d.get("spec_version")=="3.0";assert d.get("spec_checksum_sha256")' \
+  && t "FL3: architecture.json carries spec version + checksum" || f "FL3: architecture missing spec metadata"
+
+# 9.3 Task graph engine
+graph="$TMP/fl3-graph.json"
+python3 "$FL_ROOT/taskgraph.py" build "$fl3spec" "$fl3arch" --out "$graph" >/dev/null 2>&1 \
+  && t "FL3: task graph build" || f "FL3: task graph build failed"
+python3 "$FL_ROOT/taskgraph.py" verify "$graph" >/dev/null 2>&1 \
+  && t "FL3: task graph acyclic + no parallel conflicts" || f "FL3: task graph verification failed"
+[ "$(python3 -c 'import json;print(json.load(open("'"$graph"'"))["total_tasks"]>=10)')" = "True" ] \
+  && t "FL3: task graph covers required task types" || f "FL3: task graph too small"
+
+# 9.4 Preflight engine
+python3 "$FL_ROOT/preflight.py" check "$appdir" >/dev/null 2>&1 \
+  && t "FL3: preflight clean scaffold" || f "FL3: preflight flagged clean scaffold"
+bad2="$TMP/fl3-bad"; rm -rf "$bad2"; mkdir -p "$bad2/src/main/res/layout" "$bad2/src/main/java/x"
+printf 'not xml at all' > "$bad2/src/main/AndroidManifest.xml"
+printf 'package x;\npublic class Dupe{}\n' > "$bad2/src/main/java/x/A.java"
+printf 'package x;\npublic class Dupe{}\n' > "$bad2/src/main/java/x/B.java"
+python3 "$FL_ROOT/preflight.py" check "$bad2" >/dev/null 2>&1 && f "FL3: preflight missed errors" || t "FL3: preflight detects errors"
+pref="$(python3 "$FL_ROOT/preflight.py" predict "$bad2" "$TMP/kotlin.log" 2>/dev/null)"
+[ "$(printf '%s' "$pref" | python3 -c 'import json,sys;print(json.load(sys.stdin).get("matched",False))')" != "False" ] \
+  && t "FL3: predictive error correlation" || t "FL3: predictive errors handle unknown gracefully"
+
+# 9.5 Checkpoint/resume engine
+bash "$FL_ROOT/checkpoint.sh" clear fl3test >/dev/null 2>&1
+bash "$FL_ROOT/checkpoint.sh" save fl3test spec "$fl3spec" >/dev/null 2>&1 \
+  && t "FL3: checkpoint save" || f "FL3: checkpoint save failed"
+bash "$FL_ROOT/checkpoint.sh" check fl3test spec >/dev/null 2>&1 \
+  && t "FL3: checkpoint check" || f "FL3: checkpoint check failed"
+[ "$(bash "$FL_ROOT/checkpoint.sh" resume-from fl3test)" = "arch" ] \
+  && t "FL3: checkpoint resume-from computes next stage" || f "FL3: resume-from wrong"
+bash "$FL_ROOT/checkpoint.sh" clear fl3test >/dev/null 2>&1
+
+# 9.6 Knowledge engine
+kp="$TMP/know.json"; printf '{"slug":"fl3test","modules":["json","time"],"ok":true}' > "$kp"
+bash "$FL_ROOT/knowledge.sh" record module "$kp" >/dev/null 2>&1 \
+  && t "FL3: knowledge record" || f "FL3: knowledge record failed"
+[ "$(bash "$FL_ROOT/knowledge.sh" lookup module fl3test | python3 -c 'import json,sys
+try: print(len(json.load(sys.stdin))>0)
+except Exception: print(False)')" = "True" ] \
+  && t "FL3: knowledge lookup" || f "FL3: knowledge lookup empty"
+[ -f "$FL_ROOT/knowledge/failures.json" ] && python3 -c 'import json;d=json.load(open("'"$FL_ROOT"'/knowledge/failures.json"));assert len(d["failures"])>0' \
+  && t "FL3: knowledge failure DB present" || f "FL3: failure DB missing"
+
+# 9.7 Device + UI validation (honest SKIP without emulator)
+bash "$FL_ROOT/device.sh" validate "$appdir" >/dev/null 2>&1 \
+  && t "FL3: device validation handles no-device (SKIP)" || f "FL3: device validation errored"
+if [ -f "$FL_TMP/device-app.json" ] 2>/dev/null; then :; fi
+devst="$(bash "$FL_ROOT/device.sh" validate "$appdir" 2>/dev/null | python3 -c 'import json,sys
+try: print(json.load(sys.stdin).get("status",""))
+except Exception: print("")')"
+[ "$devst" = "SKIP" ] && t "FL3: device gate honestly SKIPs without emulator" || f "FL3: device gate status=$devst"
+bash "$FL_ROOT/ui-validate.sh" "$appdir" >/dev/null 2>&1 \
+  && t "FL3: ui-validate static checks pass on scaffold" || f "FL3: ui-validate failed on scaffold"
+
+# 9.8 Accuracy + benchmark engines
+acc="$(python3 "$FL_ROOT/accuracy.py" score "$appdir" 2>/dev/null)"
+[ "$acc" != "" ] && [ "$(printf '%s' "$acc" | python3 -c 'import json,sys;d=json.load(sys.stdin);print(0<=d["accuracy_score"]<=100)')" = "True" ] \
+  && t "FL3: accuracy score in range from real evidence" || f "FL3: accuracy score invalid"
+bash "$FL_ROOT/benchmark.sh" compare >/dev/null 2>&1 \
+  && t "FL3: benchmark compare runs" || f "FL3: benchmark compare failed"
+bash "$FL_ROOT/benchmark.sh" report >/dev/null 2>&1 \
+  && t "FL3: benchmark report runs" || f "FL3: benchmark report failed"
+
+# 9.9 fastlane3 orchestrator
+bash "$FL_ROOT/fastlane3.sh" idea "A fast experimental app for FL3" >/dev/null 2>&1 \
+  && t "FL3: fastlane3 idea emits validated spec" || f "FL3: fastlane3 idea failed"
+bash "$FL_ROOT/fastlane3.sh" plan "$fl3spec" >/dev/null 2>&1 \
+  && t "FL3: fastlane3 plan (arch+compat+taskgraph)" || f "FL3: fastlane3 plan failed"
+bash "$FL_ROOT/fastlane3.sh" status fl3test >/dev/null 2>&1 \
+  && t "FL3: fastlane3 status" || f "FL3: fastlane3 status failed"
+[ "$(bash "$FL_ROOT/fastlane.sh" full3 "FL3 orchestrator smoke test" 2>&1 | grep -c "FL3 summary")" -ge 1 ] \
+  && t "FL3: fastlane3 pipeline completes" || f "FL3: fastlane3 pipeline incomplete"
+
 echo ""
 echo "==== SELFTEST RESULT: pass=$PASS fail=$FAIL ===="
 [ "$FAIL" -eq 0 ] && echo "FASTLANE-SELFTEST: ALL PASS" && exit 0

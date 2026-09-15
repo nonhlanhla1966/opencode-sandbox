@@ -34,7 +34,10 @@ stage_stop() {
   python3 - "$STAGE_FILE" "$id" "$(now_ms)" <<'PY'
 import json,sys,os
 p,k,now=sys.argv[1],sys.argv[2],int(sys.argv[3])
-d=json.load(open(p))
+try:
+    d=json.load(open(p))
+except Exception:
+    d={}
 if k in d:
     d["_durations_"+k]=now-d[k]
 json.dump(d,open(p,"w"))
@@ -78,10 +81,10 @@ stage_map={
   "planning":"planning","analyze":"analyzing","scaffold":"scaffolding",
   "compile":"compiling","tests":"testing","lint":"linting",
   "gates":"gates","security":"security","verify":"verifying",
-  "release":"releasing","total":"total",
+  "release":"releasing","total":"total","preflight":"preflighting",
 }
-for st in ("planning","analyzing","scaffolding","compiling","testing","linting",
-           "gates","security","verifying","releasing","total"):
+for st in ("planning","analyzing","scaffolding","compiling","preflighting",
+           "testing","linting","gates","security","verifying","releasing","total"):
     key=stage_map[st]
     if key not in run: continue
     s=agg["stages"].setdefault(st,{"count":0,"history":[]})
@@ -104,8 +107,8 @@ report() {
 import json,sys
 agg=json.load(open(sys.argv[1]))
 print("Fast Lane telemetry (committed aggregate)\n")
-for st in ("planning","analyzing","scaffolding","compiling","testing","linting",
-           "gates","security","verifying","releasing","total"):
+for st in ("planning","analyzing","scaffolding","compiling","preflighting",
+           "testing","linting","gates","security","verifying","releasing","total"):
     s=agg["stages"].get(st)
     if not s: continue
     h=s["history"]

@@ -43,10 +43,14 @@ fi
 hardly_signed_debug="debug"
 note="debug build (expected)"
 
+budget_ok="true"
+if [ "$apk_ok" != "true" ]; then budget_ok="false"; fi
+
 python3 -c "
 import json,sys
 json.dump({'app':'$slug','apk_bytes':$apk_bytes,'apk_size':'$apk_size',
            'apk_size_ok':$apk_ok,'dex_methods':$dex_methods,
+           'budget_ok':$budget_ok,
            'notes':'$note'},open('$out','w'),indent=1)
 "
 

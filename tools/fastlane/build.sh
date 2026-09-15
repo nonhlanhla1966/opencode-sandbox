@@ -76,6 +76,18 @@ run_gradle() {
 
 # ---- compile (assembleDebug) --------------------------------------------------
 "$REPO_ROOT/tools/fastlane/telemetry.sh" stage-stop planning
+
+# ---- Fast Lane 3.0 preflight (fail fast before expensive compile) -------------
+"$REPO_ROOT/tools/fastlane/telemetry.sh" stage-start preflight
+if [ -f "$FL_ROOT/preflight.py" ]; then
+  if python3 "$FL_ROOT/preflight.py" check "$app_dir" >/dev/null 2>&1; then
+    ok "  preflight: static checks clean"
+  else
+    warn "preflight found issues; they will surface in the build (see preflight report)"
+  fi
+fi
+"$REPO_ROOT/tools/fastlane/telemetry.sh" stage-stop preflight
+
 "$REPO_ROOT/tools/fastlane/telemetry.sh" stage-start compiling
 eta COMPILING
 if run_gradle assembleDebug; then
@@ -137,13 +149,30 @@ total_s=$(( ($(now_ms) - start_ms) / 1000 ))
 sha="$(sha256sum "$apk" | awk '{print $1}')"
 sz="$(du -h "$apk" | cut -f1)"
 
+# ---- Fast Lane 3.0 accuracy score (real artifacts only) -----------------------
+acc_field=""
+if [ -f "$FL_ROOT/accuracy.py" ]; then
+  acc="$(python3 "$FL_ROOT/accuracy.py" score "$app_dir" --apk "$apk" \
+         --gates "$FL_TMP/gates-$slug.json" 2>/dev/null || echo '{}')"
+  accuracy_score="$(printf '%s' "$acc" | python3 -c 'import json,sys
+try: print(json.load(sys.stdin).get("accuracy_score","null"))
+except Exception: print("null")' 2>/dev/null || echo "null")"
+  if [ "$accuracy_score" != "null" ]; then
+    ok "  FL3 accuracy score: $accuracy_score/100"
+    accuracy_json="$(printf '%s' "$acc" | python3 -c 'import json,sys;print(json.dumps(json.load(sys.stdin)))' 2>/dev/null)"
+    printf '%s\n' "$accuracy_json" > "$FL_TMP/accuracy-$slug.json"
+    acc_field=",'accuracy_score':$accuracy_score"
+  fi
+fi
+
 # ---- telemetry record -------------------------------------------------------------
 python3 -c "
 import json,os
 run={'run_id':os.environ.get('GITHUB_RUN_ID','local')+'-'+'$slug','complexity':'$complexity',
      'cold_cache':os.environ.get('FL_COLD_CACHE','0')=='1',
      'compiling':0,'testing':0,'linting':0,'gates':0,'security':0,'verifying':0,
-     'total':$total_s,'apps':1,'slug':'$slug','recorded_at':'$(now_iso)'}
+     'total':$total_s,'apps':1,'slug':'$slug','generation':'3.0'$acc_field,
+     'recorded_at':'$(now_iso)'}
 json.dump(run,open('$FL_TMP/run-$slug.json','w'))
 "
 "$REPO_ROOT/tools/fastlane/telemetry.sh" record "$FL_TMP/run-$slug.json" >/dev/null 2>&1 || true

@@ -54,6 +54,8 @@ def plan(spec: dict) -> dict:
     return {
         "name": spec.get("name", "app"),
         "application_id": spec.get("application_id"),
+        "spec_version": spec.get("spec_version", "2.0"),
+        "spec_checksum_sha256": spec.get("checksum_sha256", ""),
         "layers": ["ui", "logic", "persistence", "network"],
         "archetype": spec.get("archetype", "display"),
         "modules": modules,
@@ -119,6 +121,9 @@ def render_plan_md(spec: dict, arch: dict) -> str:
     w.append("Structured plan produced by Fast Lane planning pipeline "
              "(deterministic architecture.json). The agent implements against "
              "this plan; deviations must be additive, never contradictory.")
+    w.append("")
+    w.append(f"- Spec version: **{spec.get('spec_version', '2.0')}**")
+    w.append(f"- Spec checksum (sha256): `{(spec.get('checksum_sha256') or 'n/a')[:16]}{'…' if spec.get('checksum_sha256') else ''}`")
     w.append("")
     w.append("## Complexity")
     cx = spec.get("complexity", {})

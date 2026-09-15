@@ -19,6 +19,7 @@ Output schema (app-spec.json):
   }
 """
 
+import hashlib
 import json
 import re
 import sys
@@ -228,6 +229,20 @@ def analyze(idea: str):
     band = {"SIMPLE": "under 2 minutes", "MEDIUM": "2-5 minutes",
             "COMPLEX": "~5 minutes", "EXTREME": "5-10+ minutes"}[level]
 
+    assumptions = []
+    if not apis:
+        assumptions.append({"key": "default_apis", "note": "No API requirements specified; assuming offline-only where applicable"})
+    if auth == "none":
+        assumptions.append({"key": "default_auth", "note": "No authentication specified; using none"})
+    if storage == ["datastore/prefs"]:
+        assumptions.append({"key": "default_storage", "note": "Using default storage (datastore/prefs)"})
+    if testing == ["unit"]:
+        assumptions.append({"key": "default_testing", "note": "Using default testing (unit only)"})
+    if not permissions:
+        assumptions.append({"key": "default_permissions", "note": "No permissions required"})
+    if len(screens) <= 1:
+        assumptions.append({"key": "default_ui", "note": "Minimal screens; navigation simplified"})
+
     spec = {
         "name": idea,
         "slug": slug_of(idea),
@@ -255,9 +270,17 @@ def analyze(idea: str):
         "archetype": archetype_for(features, screens),
         "complexity": {"level": level, "score": score, "factors": factors},
         "estimate": {"build_time_seconds": per_app, "band": band},
-        "generated_by": "fastlane-analyze-v1",
+        "spec_version": "3.0",
+        "assumptions": assumptions,
+        "generated_by": "fastlane-analyze-v3",
         "final": True,
     }
+    # Compute deterministic checksum (exclude metadata keys)
+    clean = {k: v for k, v in spec.items()
+             if k not in ("checksum_sha256", "generated_by", "final", "spec_version")}
+    spec["checksum_sha256"] = hashlib.sha256(
+        json.dumps(clean, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
     return spec
 
 

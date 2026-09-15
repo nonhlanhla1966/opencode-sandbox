@@ -1,0 +1,114 @@
+{
+  "version": "3.0",
+  "description": "Fast Lane 3.0 predictive error knowledge base — known build failure signatures, their categories, and safe patches.",
+  "failures": [
+    {
+      "id": "FL-001",
+      "category": "compile_sdk",
+      "signature": "requires compileSdk",
+      "description": "A dependency requires a higher compileSdk than the project declares.",
+      "patch": "Raise compileSdk in build.gradle to the required value (34 or higher).",
+      "confidence": 0.9,
+      "safe": true
+    },
+    {
+      "id": "FL-002",
+      "category": "dependency",
+      "signature": "unresolved dependency",
+      "description": "A dependency coordinate could not be resolved from configured repositories.",
+      "patch": "Verify the dependency coordinate exists in mavenCentral()/google(); use a stable pinned version.",
+      "confidence": 0.85,
+      "safe": true
+    },
+    {
+      "id": "FL-003",
+      "category": "min_sdk",
+      "signature": "requires higher SDK version",
+      "description": "Code or a dependency calls APIs above the configured minSdk.",
+      "patch": "Add API guards (Build.VERSION.SDK_INT) or raise minSdk only if agreed.",
+      "confidence": 0.8,
+      "safe": true
+    },
+    {
+      "id": "FL-004",
+      "category": "resource",
+      "signature": "resource linking failed",
+      "description": "A @string/@color/@drawable reference in a layout or manifest does not resolve.",
+      "patch": "Add the referenced resource to src/main/res/values/ resources; verify naming.",
+      "confidence": 0.8,
+      "safe": true
+    },
+    {
+      "id": "FL-005",
+      "category": "xml",
+      "signature": "XML parser exception",
+      "description": "A resource/layout XML file is not well-formed.",
+      "patch": "Fix the XML syntax error (unclosed tag, invalid entity, duplicate attribute).",
+      "confidence": 0.85,
+      "safe": true
+    },
+    {
+      "id": "FL-006",
+      "category": "manifest",
+      "signature": "attribute package is required",
+      "description": "The manifest is missing the package attribute or it is invalid.",
+      "patch": "Set package/namespace to the applicationId in the manifest or build.gradle.",
+      "confidence": 0.9,
+      "safe": true
+    },
+    {
+      "id": "FL-007",
+      "category": "agp_version",
+      "signature": "Invalid namespace",
+      "description": "AGP expects a namespace element; legacy package-only configuration fails.",
+      "patch": "Add android { namespace 'com.appfactory.<slug>' } in build.gradle.",
+      "confidence": 0.9,
+      "safe": true
+    },
+    {
+      "id": "FL-008",
+      "category": "method_overlap",
+      "signature": "Cannot inline bytecode",
+      "description": "Duplicate method bodies or mixed bytecode versions in merged dependencies.",
+      "patch": "Check for duplicate dependency coordinates; align dependency versions.",
+      "confidence": 0.6,
+      "safe": true
+    },
+    {
+      "id": "FL-009",
+      "category": "test",
+      "signature": "FAILED",
+      "description": "A unit test asserted something that did not hold.",
+      "patch": "Fix the assertion or the logic under test; test must assert real behavior.",
+      "confidence": 0.7,
+      "safe": false
+    },
+    {
+      "id": "FL-010",
+      "category": "sdk_license",
+      "signature": "license for package Android SDK",
+      "description": "The Android SDK license has not been accepted on this runner.",
+      "patch": "Accept licenses via sdkmanager --licenses or the CI image pre-configuration.",
+      "confidence": 0.95,
+      "safe": true
+    },
+    {
+      "id": "FL-011",
+      "category": "dependencies_version",
+      "signature": "Using insecure protocols with repositories",
+      "description": "A repository URL uses an insecure protocol (http).",
+      "patch": "Use https:// repositories only (mavenCentral, google).",
+      "confidence": 0.9,
+      "safe": true
+    },
+    {
+      "id": "FL-012",
+      "category": "network",
+      "signature": "Could not GET",
+      "description": "Gradle could not download a dependency from the network.",
+      "patch": "Retry the build (transient); pin versions in dependency policy if recurring.",
+      "confidence": 0.6,
+      "safe": true
+    }
+  ]
+}

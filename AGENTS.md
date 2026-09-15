@@ -24,8 +24,25 @@ Do not ask for help.
    requests. Do NOT create GitHub Releases — the CI workflow does that.
 8. **Retry, then repair, up to 3 times.** Use `tools/fastlane/repair.sh` for
    compile failures. After 3 attempts stop, post an honest failure summary.
-9. **Never weaken quality gates.** `gates.sh` (C001–C010) and
+9. **Never weaken quality gates.** `gates.sh` (C001–C014) and
    `security-scan.sh` block release; do not skip or soften them to save time.
+
+### Fast Lane 3.0 (final architecture upgrade)
+
+FL3 is layered on top of FL2. Use these extra engines when relevant:
+
+- After ANALYZE, validate the spec (version/checksum/schema/assumptions):
+  `python3 tools/fastlane/spec_validate.py check apps/.idea.json`.
+- Module selection is registry-driven: `python3 tools/fastlane/compat.py
+  registry` then `spec_validate.py contract` for coverage (gate C014).
+- Preflight before local validation: `python3 tools/fastlane/preflight.py check
+  apps/<slug>` (finds package/manifest/resource/duplicate faults without SDK).
+- Checkpoint progress per app: `bash tools/fastlane/checkpoint.sh save <slug>
+  <stage> <file>` so a retried run resumes, not restarts.
+- Device/UI gates (C011/C012): on a runner with no emulator they MUST report
+  `SKIP` with a reason, never a silent pass.
+- See `FASTLANE_3_FINAL_ARCHITECTURE.md` for the full subsystem map; run
+  `bash tools/fastlane/selftest.sh` (67 tests) to verify the engine.
 
 ## Pipeline per request
 
@@ -114,6 +131,9 @@ Python 3, and the Fast Lane engine under `tools/fastlane/`
 (`analyze.py`, `plan.py`, `scaffold.py`, `testgen.sh`, `build.sh`,
 `build-all.sh`, `repair.sh`, `gates.sh`, `security-scan.sh`, `deps.sh`,
 `perf.sh`, `estimate.sh`, `telemetry.sh`, `regression.sh`, `selftest.sh`).
+Fast Lane 3.0 engines: `spec_validate.py`, `compat.py`, `taskgraph.py`,
+`preflight.py`, `checkpoint.sh`, `knowledge.sh`, `device.sh`, `ui-validate.sh`,
+`accuracy.py`, `benchmark.sh`, `fastlane3.sh`.
 
 ## Definition of done
 - `apps/<slug>/` scaffolded by the engine (spec, architecture, DESIGN.md,

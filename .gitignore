@@ -13,6 +13,8 @@ apps/*/build/
 .DS_Store
 *.log
 
-# Fast Lane runtime artifacts (never commit live telemetry streams)
+# Fast Lane runtime artifacts (never commit live telemetry/state)
 .fastlane/tmp/
+.fastlane/checkpoints/
+.fastlane/knowledge/
 *.telemetry.run.json

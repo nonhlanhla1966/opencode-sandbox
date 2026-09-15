@@ -144,6 +144,77 @@ else
   gate C010_SHA256 FAIL "cannot checksum missing apk"
 fi
 
+# ===== Fast Lane 3.0 gates (C011–C014) ======================================
+
+# C011 device validation (device.sh) — honest SKIP when no device, never silently pass
+if bash "$FL_ROOT/device.sh" validate "$app_dir" "$apk" >/dev/null 2>&1; then
+  dev_status="$(python3 -c "
+import json
+try:
+    r=json.load(open('$FL_TMP/device-$app_slug.json'))
+    print(r.get('status',''))
+except Exception: print('')"
+  )"
+  case "$dev_status" in
+    PASS) gate C011_DEVICE_TEST PASS "validated on live device/emulator";;
+    "")   gate C011_DEVICE_TEST SKIP "no device report produced";;
+    *)    gate C011_DEVICE_TEST SKIP "no device/emulator available on runner";;
+  esac
+else
+  gate C011_DEVICE_TEST FAIL "device validation reported failure"
+fi
+
+# C012 UI validation (ui-validate.sh) — static checks always run; dynamic SKIP-with-reason
+if bash "$FL_ROOT/ui-validate.sh" "$app_dir" "$apk" >/dev/null 2>&1; then
+  gate C012_UI_TEST PASS "static UI validation clean"
+else
+  gate C012_UI_TEST FAIL "UI validation findings"
+fi
+
+# C013 performance budget (perf.sh report) — artifact-based, SKIP when no perf report
+perf_report="$FL_TMP/perf-$app_slug.json"
+if [ -f "$perf_report" ]; then
+  perf_ok="$(python3 -c "
+import json,sys
+try:
+    r=json.load(open('$perf_report'))
+    print(r.get('budget_ok', True))
+except Exception: print(True)
+" )"
+  if [ "$perf_ok" = "True" ]; then
+    gate C013_PERFORMANCE PASS "perf report within budget"
+  else
+    gate C013_PERFORMANCE FAIL "performance budget exceeded"
+  fi
+else
+  gate C013_PERFORMANCE SKIP "no perf report artifact (perf.sh not run)"
+fi
+
+# C014 spec coverage (spec_validate.py contract) — spec-driven completeness
+if [ -f "$app_dir/app-spec.json" ]; then
+  if [ -f "$app_dir/architecture.json" ]; then
+    cov="$(python3 "$FL_ROOT/spec_validate.py" contract "$app_dir/app-spec.json" "$app_dir/architecture.json" "$app_dir" 2>/dev/null || echo '{}')"
+    cov_pct="$(printf '%s' "$cov" | python3 -c 'import json,sys
+try: print(json.load(sys.stdin).get("coverage_percentage",0))
+except Exception: print(0)')"
+    cov_covered="$(printf '%s' "$cov" | python3 -c 'import json,sys
+try: print(json.load(sys.stdin).get("features_covered",0))
+except Exception: print(0)')"
+    cov_total="$(printf '%s' "$cov" | python3 -c 'import json,sys
+try: print(json.load(sys.stdin).get("features_total",0))
+except Exception: print(0)')"
+    if [ "${cov_pct:-0}" -ge 50 ] 2>/dev/null; then
+      gate C014_SPEC_COVERAGE PASS "$cov_covered/$cov_total features covered"
+    else
+      gate C014_SPEC_COVERAGE FAIL "spec coverage ${cov_pct}% < 50% ($cov_covered/$cov_total)"
+    fi
+  else
+    gate C014_SPEC_COVERAGE SKIP "architecture.json missing (no coverage possible)"
+  fi
+else
+  gate C014_SPEC_COVERAGE SKIP "app-spec.json missing"
+fi
+
 {
   echo "{\"app\":\"$app_slug\",\"passed\":$pass,\"failed\":$fail,\"skipped\":$skipped,\"gates\":["
   first=1

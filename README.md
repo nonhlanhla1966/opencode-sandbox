@@ -46,12 +46,28 @@ CLIs; it never hand-writes specs or scaffolds by hand.
 | `estimate.sh` | Build-time estimator, self-tuned from `.fastlane/telemetry.json` |
 | `telemetry.sh` | Stage timings per build, tapped into the run history |
 | `repair.sh` + `fixes/` | Error classification + bounded repair loop (budget 3) |
-| `gates.sh` | Quality gates C001–C010 — any FAIL blocks release |
+| `gates.sh` | Quality gates C001–C014 — any FAIL blocks release |
 | `security-scan.sh` | Static scan: secrets, cleartext, exported components, weak perms |
 | `deps.sh` + `modules/DEPENDENCY_REGISTRY.json` | Dependency allowlist + known-vulnerable table |
 | `perf.sh` | APK size / method-count heuristics |
 | `regression.sh` | Regression lab over the protected apps |
-| `selftest.sh` | No-SDK engine self-tests (currently 30/30 pass) |
+| `selftest.sh` | No-SDK engine self-tests (currently 67/67 pass — FL2 baseline + FL3 engines) |
+
+### Fast Lane 3.0 engines (layered on the FL2 engine)
+
+| Tool | What it does |
+|---|---|
+| `spec_validate.py` | Specification Engine — canonical `app-spec.json` schema validation, `spec_version: "3.0"`, sha256 checksum, assumptions, feature→module→test→gate coverage (`contract`) |
+| `compat.py` | Module Registry + Dependency Intelligence — versioned `modules/REGISTRY.json`, checksums/metadata, pin compatibility, registry-driven module selection |
+| `taskgraph.py` | Task Graph Engine — deterministic DAG + topological order + safe parallel fan-out + cycle/conflict verification |
+| `preflight.py` | Preflight + Predictive Errors — machines-report pre-build faults; correlates build logs with `knowledge/failures.json` signatures |
+| `checkpoint.sh` | Recovery/Checkpoint Engine — per-app stage checkpoints, resume from last completed stage |
+| `knowledge.sh` | Knowledge/Cache Engine — persistent cross-run knowledge + predictive failure DB |
+| `device.sh` | Device Validation Engine — install/launch on real device; honest `SKIP` w/ reason if none |
+| `ui-validate.sh` | UI Validation Engine — static layout/id checks always run; dynamic UI `SKIP` w/ reason |
+| `accuracy.py` | Accuracy Score (0–100) from real artifacts only — APK, tests, gates, coverage, security, deps |
+| `benchmark.sh` | Speed Score — FL1/FL2/FL3 comparison from real run telemetry |
+| `fastlane3.sh` | Fast Lane 3.0 orchestrator (`fastlane.sh full3 "<idea>"`) — checkpointed pipeline end-to-end |
 
 ## Verified modules
 
@@ -73,7 +89,7 @@ glue), each with tests, vendored into generated apps as source. Currently:
 | LOCAL_VALIDATION | OpenCode agent | `scripts/validate-app.sh` structural checks |
 | GITHUB_PUSH | OpenCode agent | Commit and push to `main` (design + code together) |
 | CI_BUILD | GitHub Actions | `build.yml` compiles `apps/*` on `ubuntu-latest` via `build-all.sh` |
-| FAST_LANE | GitHub Actions | Estimate banner, quality gates C001–C010, security scan, perf, telemetry |
+| FAST_LANE | GitHub Actions | Estimate banner, quality gates C001–C014, security scan, perf, telemetry |
 | APK_VERIFY | GitHub Actions | `aapt dump badging` checks package, version, launchable activity |
 | RELEASE | GitHub Actions | Idempotent rolling release `app-<slug>-latest` with APK + `SHA256SUMS` |
 | DOWNLOAD_READY | GitHub Actions | Posts the public download link on the requesting issue |
@@ -140,19 +156,40 @@ branching. Self-tests (JVM-free, bounded live calls):
 * Slack-shaped command surface: edit `.github/workflows/opencode.yml` to add
   more trigger phrases (defaults: `/app`, `/oc`, `/opencode`).
 
+## Fast Lane 3.0
+
+Fast Lane 3.0 is the **final major architecture upgrade** and is layered on top
+of the working FL1/FL2 stack — nothing existing was removed. It adds the
+canonical spec (versioned + checksummed + schema-validated, assumptions
+recorded), the versioned Module Registry with registry-driven selection, the
+Task Graph with safe fan-out, Preflight + predictive errors, Checkpoint/Resume,
+the Knowledge/Cache + device/UI engines (honest `SKIP` w/ reason), Accuracy and
+Speed scores, gates C011–C014, and an end-to-end orchestrator. Full document:
+`FASTLANE_3_FINAL_ARCHITECTURE.md`.
+
+```
+bash tools/fastlane/fastlane.sh full3 "<one-line idea>"   # checkpointed FL3 pipeline
+bash tools/fastlane/selftest.sh                            # 67 no-SDK engine tests
+bash tools/fastlane/accuracy.py score apps/<slug>          # Accuracy Score from real artifacts
+bash tools/fastlane/benchmark.sh report                    # Speed Score: FL1 vs FL2 vs FL3
+```
+
 ## Layout
 
 ```
 .
 ├── AGENTS.md                  # Operating procedure the OpenCode agent follows
 ├── README.md
+├── FASTLANE_3_FINAL_ARCHITECTURE.md  # FL3.0 architecture document
 ├── docs/DESIGN_TEMPLATE.md    # Design-first template (screens/nav/style/icon)
 ├── scripts/                   # validate-app, retry, verify-apk, release, note
 ├── apps/<slug>/               # one standalone Android project per app
 ├── modules/<id>/              # verified reusable Java modules (+ tests)
 ├── modules/DEPENDENCY_REGISTRY.json
+├── modules/REGISTRY.json      # FL3 versioned module registry (generated)
 ├── .fastlane/telemetry.json   # aggregated build telemetry (self-tuning estimates)
-├── tools/fastlane/            # Fast Lane engine (analyze/plan/scaffold/build/...)
+├── .fastlane/checkpoints/     # FL3 per-app stage checkpoints (resume support)
+├── tools/fastlane/            # Fast Lane engine (FL2 + FL3 engines)
 ├── tools/gateway/             # JSON CLI control plane (create/status/apk)
 └── .github/workflows/
     ├── opencode.yml           # Engine entry point (agent + trigger)

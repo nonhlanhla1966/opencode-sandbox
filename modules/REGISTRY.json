@@ -1,0 +1,421 @@
+{
+ "generated_by": "fastlane-compat-registry",
+ "modules": {
+  "crypto": {
+   "android_framework": "none (pure JVM; JCA/Android compatible)",
+   "checksums": {
+    "source": "d8d892fe9fbc33b15d3d97e0e8f80f1576405fe5a4629519c1f9fa1b52c47efc",
+    "tests": "b918cffe41616a4c656c00c3cae11f70435699b30a61f5287757466023dcbb75"
+   },
+   "compatibility": {
+    "agp": "8.5.2",
+    "compile_sdk": 34,
+    "gradle": "8.7",
+    "jdk": "17",
+    "min_sdk": 21
+   },
+   "description": "AES-256-GCM encrypt/decrypt (random nonce) + deterministic key derivation + base64. Uses JCA only; works on Android and JVM.",
+   "file_counts": {
+    "source": 3,
+    "tests": 1
+   },
+   "id": "crypto",
+   "jvm_testable": true,
+   "license": "MIT",
+   "name": "Encryption Utilities",
+   "requires": [],
+   "tests": [
+    "unit"
+   ],
+   "usage": "generated apps with user-supplied API keys or sensitive local data.",
+   "version": "1.0.0"
+  },
+  "http-rest": {
+   "android_framework": "none (pure JVM; HttpURLConnection available on Android)",
+   "checksums": {
+    "source": "e85ce4a5f9b9aa25a902a752d258c0eed81ee2ffc6abd4e1507fd4ea822538b1",
+    "tests": "6109772d4747f3d92672b78f86f2fc3628b4cb2309aa48d0060128dcac72f4ea"
+   },
+   "compatibility": {
+    "agp": "8.5.2",
+    "compile_sdk": 34,
+    "gradle": "8.7",
+    "jdk": "17",
+    "min_sdk": 21
+   },
+   "description": "Minimal synchronous HTTP client over HttpURLConnection: GET/POST/DELETE, query building, JSON bodies, timeouts, gzip. TLS always on.",
+   "file_counts": {
+    "source": 3,
+    "tests": 1
+   },
+   "id": "http-rest",
+   "jvm_testable": true,
+   "license": "MIT",
+   "name": "REST HTTP Client",
+   "requires": [
+    "json"
+   ],
+   "tests": [
+    "unit",
+    "api(offline: request/url building only)"
+   ],
+   "usage": "apps calling OpenAI-compatible chat, weather, REST backends.",
+   "version": "1.0.0"
+  },
+  "json": {
+   "android_framework": "none (pure JVM)",
+   "checksums": {
+    "source": "67e5ab7da232aa90fc0baf1edd71ba452ccfb44a3ef7b21ab1f9b6e6d1b1d4f3",
+    "tests": "60ddba8bd95d45db4411daa76cb96e9b1c0961dff1e2bf7190ffa32dce4909ae"
+   },
+   "compatibility": {
+    "agp": "8.5.2",
+    "compile_sdk": 34,
+    "gradle": "8.7",
+    "jdk": "17",
+    "min_sdk": 21
+   },
+   "description": "Dependency-free JSON object/array model with a strict recursive-descent parser and serializer. Safe under Java 17 and Android (API 21+).",
+   "file_counts": {
+    "source": 5,
+    "tests": 1
+   },
+   "id": "json",
+   "jvm_testable": true,
+   "license": "MIT",
+   "name": "Minimal JSON Model + Parser",
+   "requires": [],
+   "tests": [
+    "unit"
+   ],
+   "usage": "included by the Fast Lane scaffold whenever an app needs structured configuration, persistence or API payloads.",
+   "version": "1.0.0"
+  },
+  "media-image": {
+   "android_framework": "partial (core pure JVM; CameraGlue uses android.provider.MediaStore / Intent)",
+   "checksums": {
+    "source": "3abef3a14a967dee062d3ec99009d2e67050c40998dea734ebf043958a44d169",
+    "tests": "7dba089ae03d6363e834c701fcd5e47833fa05ecb5a88ce99ecb7bec93b51911"
+   },
+   "compatibility": {
+    "agp": "8.5.2",
+    "compile_sdk": 34,
+    "gradle": "8.7",
+    "jdk": "17",
+    "min_sdk": 21
+   },
+   "description": "Aspect-ratio math, sample-size computation and image dimension validation. Android glue uses ACTION_IMAGE_CAPTURE + MediaStore, respecting runtime camera permission.",
+   "file_counts": {
+    "source": 2,
+    "tests": 1
+   },
+   "id": "media-image",
+   "jvm_testable": true,
+   "license": "MIT",
+   "name": "Image & Camera Helpers",
+   "requires": [],
+   "tests": [
+    "unit"
+   ],
+   "version": "1.0.0"
+  },
+  "network": {
+   "android_framework": "partial (core pure JVM; NetworkWatcher glue uses android.net.ConnectivityManager)",
+   "checksums": {
+    "source": "9f0c77124387247f3bbd9660d51791027b13e47bd8d5012f916d354f5ecca9f0",
+    "tests": "f062aed27da2855f1427c741061ead21c5c5e954b7d145d2005480fa24ef66e2"
+   },
+   "compatibility": {
+    "agp": "8.5.2",
+    "compile_sdk": 34,
+    "gradle": "8.7",
+    "jdk": "17",
+    "min_sdk": 21
+   },
+   "description": "Deterministic connectivity state machine (ONLINE/OFFLINE), change listeners and offline-first policy hinting. Android glue adds ConnectivityManager wiring.",
+   "file_counts": {
+    "source": 3,
+    "tests": 1
+   },
+   "id": "network",
+   "jvm_testable": true,
+   "license": "MIT",
+   "name": "Network Status & Offline Detection",
+   "requires": [],
+   "tests": [
+    "unit"
+   ],
+   "usage": "offline-first apps and graceful network-failure UX.",
+   "version": "1.0.0"
+  },
+  "notifications": {
+   "android_framework": "partial (core pure JVM; Notifier glue uses android.app.Notification)",
+   "checksums": {
+    "source": "fa2d471c960c72cccf22eb70a4feed8a6748d865397031442370a0483b676fd2",
+    "tests": "9ce389068d47271fb8dbada718961349d5939646cf100507e49ccc20b8f549e8"
+   },
+   "compatibility": {
+    "agp": "8.5.2",
+    "compile_sdk": 34,
+    "gradle": "8.7",
+    "jdk": "17",
+    "min_sdk": 21
+   },
+   "description": "Deterministic notification spec model + notification-permission posture constants. Android glue posts real notifications with channels.",
+   "file_counts": {
+    "source": 3,
+    "tests": 1
+   },
+   "id": "notifications",
+   "jvm_testable": true,
+   "license": "MIT",
+   "name": "Notifications Helper",
+   "requires": [],
+   "tests": [
+    "unit"
+   ],
+   "usage": "habit reminds, alarms, message pings.",
+   "version": "1.0.0"
+  },
+  "retry": {
+   "android_framework": "none (pure JVM)",
+   "checksums": {
+    "source": "643aee7852aee2389c3728c204a24a32b45f679e61a8c37953919caf2b19a756",
+    "tests": "ec502718f98d9fde3dc4b6994ecd228dc08a236b0785162a1d4caf50e629d48e"
+   },
+   "compatibility": {
+    "agp": "8.5.2",
+    "compile_sdk": 34,
+    "gradle": "8.7",
+    "jdk": "17",
+    "min_sdk": 21
+   },
+   "description": "Exponential backoff with jitter, bounded retries, and a deterministic RetryRunner for network/API calls and startup work.",
+   "file_counts": {
+    "source": 3,
+    "tests": 1
+   },
+   "id": "retry",
+   "jvm_testable": true,
+   "license": "MIT",
+   "name": "Retry & Backoff",
+   "requires": [],
+   "tests": [
+    "unit"
+   ],
+   "usage": "automatic error-fix loops and resilient API calls.",
+   "version": "1.0.0"
+  },
+  "settings": {
+   "android_framework": "partial (core pure JVM; PrefsStore glue uses android.content.SharedPreferences)",
+   "checksums": {
+    "source": "de9faf00464649f31ac1befaf6c5009d468b3dc986b474691cc17937d7c3076a",
+    "tests": "11330e69d8b9dac9de96c1f4aa0a51405aedda05f9c0594c2ba68267c7e6407f"
+   },
+   "compatibility": {
+    "agp": "8.5.2",
+    "compile_sdk": 34,
+    "gradle": "8.7",
+    "jdk": "17",
+    "min_sdk": 21
+   },
+   "description": "Type-safe key/value settings with getters/setters, change listeners and structured section building. Android glue maps it onto SharedPreferences.",
+   "file_counts": {
+    "source": 3,
+    "tests": 1
+   },
+   "id": "settings",
+   "jvm_testable": true,
+   "license": "MIT",
+   "name": "Typed Settings + Preferences",
+   "requires": [],
+   "tests": [
+    "unit"
+   ],
+   "usage": "settings screens and app configuration.",
+   "version": "1.0.0"
+  },
+  "storage-file": {
+   "android_framework": "none (pure JVM)",
+   "checksums": {
+    "source": "c426560c39ee1d2bd93119c7af57b4b928949792ed2563045365bb18e90b9dfa",
+    "tests": "121a99765c16f730be7cbc9161eb252a24d561a7c0587d00bb13c2358fff18b8"
+   },
+   "compatibility": {
+    "agp": "8.5.2",
+    "compile_sdk": 34,
+    "gradle": "8.7",
+    "jdk": "17",
+    "min_sdk": 21
+   },
+   "description": "Deterministic file manifest, safe join, and ZIP-based backup/restore using java.util.zip. Pure JVM.",
+   "file_counts": {
+    "source": 2,
+    "tests": 1
+   },
+   "id": "storage-file",
+   "jvm_testable": true,
+   "license": "MIT",
+   "name": "File Storage & Backup",
+   "requires": [],
+   "tests": [
+    "unit"
+   ],
+   "version": "1.0.0"
+  },
+  "storage-sqlite": {
+   "android_framework": "partial (core pure JVM; SqliteStore glue uses android.database.sqlite)",
+   "checksums": {
+    "source": "4b2a07f7ebc2e82e8fa37693972e7e47750906871a83f13c6f7f49b0f130153e",
+    "tests": "ff9378c85183db47f673cc37c495188c10ae2ab01984682dc4a5da93a4b85d28"
+   },
+   "compatibility": {
+    "agp": "8.5.2",
+    "compile_sdk": 34,
+    "gradle": "8.7",
+    "jdk": "17",
+    "min_sdk": 21
+   },
+   "description": "Versioned schema migrations + typed table builder. Pure core is JVM-tested; Android glue (SQLiteOpenHelper) included for API 21+.",
+   "file_counts": {
+    "source": 4,
+    "tests": 1
+   },
+   "id": "storage-sqlite",
+   "jvm_testable": true,
+   "license": "MIT",
+   "name": "SQLite Storage",
+   "requires": [],
+   "tests": [
+    "unit",
+    "db"
+   ],
+   "usage": "offline-first and notes/todo/inventory apps.",
+   "version": "1.0.0"
+  },
+  "text": {
+   "android_framework": "none (pure JVM)",
+   "checksums": {
+    "source": "39489749952eb5ccc4996360253440b35d62ca6e4ffc727444ced27513d00e6b",
+    "tests": "3f6d8b48e0d3fad035111a7b04d631a9be9780735ff622f04f3e3a5f098e49ff"
+   },
+   "compatibility": {
+    "agp": "8.5.2",
+    "compile_sdk": 34,
+    "gradle": "8.7",
+    "jdk": "17",
+    "min_sdk": 21
+   },
+   "description": "Slugify, title-case, truncate, strip-to-single-space, format bytes/duration.",
+   "file_counts": {
+    "source": 2,
+    "tests": 1
+   },
+   "id": "text",
+   "jvm_testable": true,
+   "license": "MIT",
+   "name": "Text Utilities",
+   "requires": [],
+   "tests": [
+    "unit"
+   ],
+   "usage": "automatic with every generated app.",
+   "version": "1.0.0"
+  },
+  "themegen": {
+   "android_framework": "none (pure JVM)",
+   "checksums": {
+    "source": "8a03ba1197f0ad1c84e18cf28c6b2f85fe8c38190f4a6625ec5c20f08cc66f49",
+    "tests": "7e8b48a0d994d786b7c91dcc77a52b3e1a801edbe9c428d7d605267bc11d07c9"
+   },
+   "compatibility": {
+    "agp": "8.5.2",
+    "compile_sdk": 34,
+    "gradle": "8.7",
+    "jdk": "17",
+    "min_sdk": 21
+   },
+   "description": "Deterministic color palettes, WCAG-aware contrast utilities and theme-mode resolution. Pure JVM.",
+   "file_counts": {
+    "source": 2,
+    "tests": 1
+   },
+   "id": "themegen",
+   "jvm_testable": true,
+   "license": "MIT",
+   "name": "Theme & Dark Mode",
+   "requires": [],
+   "tests": [
+    "unit"
+   ],
+   "version": "1.0.0"
+  },
+  "time": {
+   "android_framework": "none (pure JVM)",
+   "checksums": {
+    "source": "ca2d5fff8265e7f9d4027ded38bf9286788dfc5852687fe80c4bd7e2ff02a73d",
+    "tests": "2b31ed9dafea074c8e7bfaca1a17062e3cccf79889e72357bcc845ca6ffd873f"
+   },
+   "compatibility": {
+    "agp": "8.5.2",
+    "compile_sdk": 34,
+    "gradle": "8.7",
+    "jdk": "17",
+    "min_sdk": 21
+   },
+   "description": "Deterministic elapsed-time measurement (stopwatch) and human-readable formatting.",
+   "file_counts": {
+    "source": 2,
+    "tests": 1
+   },
+   "id": "time",
+   "jvm_testable": true,
+   "license": "MIT",
+   "name": "Time Utilities",
+   "requires": [],
+   "tests": [
+    "unit"
+   ],
+   "version": "1.0.0"
+  },
+  "validation": {
+   "android_framework": "none (pure JVM)",
+   "checksums": {
+    "source": "ac36b76b0755020decfd9bf6dabb4564be367465a764645edc629e4409c3ad5c",
+    "tests": "108830c0cc58d140c4554a754331f111943a568c58686e21823ed622f5f0d57a"
+   },
+   "compatibility": {
+    "agp": "8.5.2",
+    "compile_sdk": 34,
+    "gradle": "8.7",
+    "jdk": "17",
+    "min_sdk": 21
+   },
+   "description": "Required, email, numeric range, length and regex validators with a composable Result.",
+   "file_counts": {
+    "source": 2,
+    "tests": 1
+   },
+   "id": "validation",
+   "jvm_testable": true,
+   "license": "MIT",
+   "name": "Form Validation",
+   "requires": [],
+   "tests": [
+    "unit"
+   ],
+   "usage": "automatic with every generated app (form screens).",
+   "version": "1.0.0"
+  }
+ },
+ "project_pins": {
+  "agp": "8.5.2",
+  "compile_sdk": 34,
+  "gradle": "8.7",
+  "jdk": "17",
+  "kotlin": "n/a",
+  "min_sdk": 21,
+  "target_sdk": 34
+ },
+ "version": "3.0"
+}
