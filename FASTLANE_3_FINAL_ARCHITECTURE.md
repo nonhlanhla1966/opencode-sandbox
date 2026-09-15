@@ -57,7 +57,7 @@ a well-defined CLI and emits JSON.
 | 16 | Release Engine | CI workflow (`.github/workflows/build.yml`) + `scripts/release.sh` (FL2) | Build-all, gates, release artifacts, DOWNLOAD_READY. FL3 gates C011–C014 plug into the same gate list; releases remain CI-drivered, deterministic. |
 | 17 | Knowledge/Cache Engine | `tools/fastlane/knowledge.sh` + `tools/fastlane/knowledge/failures.json` | Persistent cross-run knowledge (successful module integrations, build history) and the predictive failure DB. All under `.fastlane/` (never secrets). |
 | 18 | Telemetry Engine | `tools/fastlane/telemetry.sh` (FL2, extended) | Stage durations, per-app run records (now include `generation: "3.0"` + `accuracy_score`), aggregate for the estimator. `stage-stop` is now tolerant of missing stage files. |
-| 19 | Regression Lab | `tools/fastlane/regression.sh` (FL2) + `selftest.sh` + `benchmark.sh` | Regression list/validate, 67-test engine selftest (no Android SDK required), and the FL1/FL2/FL3 **benchmark** from real run telemetry. |
+| 19 | Regression Lab | `tools/fastlane/regression.sh` (FL2) + `selftest.sh` + `benchmark.sh` | Regression list/validate, 73-test engine selftest (no Android SDK required), and the FL1/FL2/FL3 **benchmark** from real run telemetry. |
 | 20 | Recovery/Checkpoint Engine | `tools/fastlane/checkpoint.sh` | Per-app stage checkpoints in `.fastlane/checkpoints/<slug>/`; `save`/`check`/`resume-from`/`state`/`clear`. Failed runs **resume from the last completed stage** instead of restarting. |
 
 ---
@@ -185,7 +185,7 @@ A release is only reached when every applicable gate passes; any FAIL blocks.
 
 ## 19. Regression Lab + Accuracy + Speed scores
 
-- `selftest.sh`: **67 tests** (34 FL2 baseline + 33 FL3), no Android SDK needed.
+- `selftest.sh`: **73 tests** (34 FL2 baseline + 39 FL3), no Android SDK needed.
 - `benchmark.sh compare|report`: reads `.fastlane/tmp/runs.jsonl`, splits by
   generation, computes per-gen median/mean totals and by-complexity medians, and
   the **Speed Score** (FL3 median vs FL1 baseline).
@@ -200,7 +200,10 @@ A release is only reached when every applicable gate passes; any FAIL blocks.
 `checkpoint.sh` keeps `.fastlane/checkpoints/<slug>/<stage>.json` for stages
 `spec arch modules taskgraph generate preflight build test security release`.
 The FL3 orchestrator (`fastlane3.sh pipeline`) consults `resume-from` so an
-interrupted run picks up where it left off.
+interrupted run picks up where it left off: `pipeline` starts fresh by default
+(clears the slug's checkpoints), and `pipeline --resume` continues from the last
+completed stage instead of re-running every stage. A completed pipeline re-entered
+with `--resume` prints its checkpoint state and stops.
 
 ---
 
@@ -218,9 +221,11 @@ status <slug>        → checkpoint + next-stage view
 
 ## Verification
 
-- `bash tools/fastlane/selftest.sh` → **67/67 PASS** (FL2 34 + FL3 33), covering
-  every FL3 engine, the honest device `SKIP`, registry/compat/taskgraph/preflight
-  correctness, and the orchestrator pipeline.
+- `bash tools/fastlane/selftest.sh` → **73/73 PASS** (FL2 34 + FL3 39), covering
+  every FL3 engine, the honest device `SKIP`, the honest UI **`SKIP`** when the
+  dynamic smoke check has no device, the C014 spec-coverage contract on a clean
+  scaffold, the benchmark's corrupt-telemetry guard, registry/compat/taskgraph/
+  preflight correctness, checkpoint `--resume`, and the orchestrator pipeline.
 - CI `.github/workflows/build.yml` runs selftest + `build-all.sh` (apps rebuild
   with the shared Gradle/SDK cache → the live benchmark sample set).
 - Fast Lane golden rules preserved: no secrets, real APKs only, deterministic

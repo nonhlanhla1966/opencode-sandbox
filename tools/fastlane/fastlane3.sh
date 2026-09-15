@@ -68,9 +68,10 @@ PY
 
 # ---- 2. Plan (+ compat + task graph + preflight) -------------------------------
 plan() {
-  local spec="${1:?usage: fastlane3.sh plan <app-spec.json>}"
+  local spec="${1:?usage: fastlane3.sh plan <app-spec.json> [<outdir>]}"
+  local outdir="${2:-$FL_TMP/plan3}"
   leader "Fast Lane 3.0 Architecture + Module Registry + Task Graph"
-  local outdir="$FL_TMP/plan3"; mkdir -p "$outdir"
+  mkdir -p "$outdir"
 
   # Registry 3.0 refresh (deterministic module metadata)
   python3 "$FL_ROOT/compat.py" registry >/dev/null 2>&1 || warn "registry refresh failed"
@@ -119,20 +120,38 @@ build() {
   bash "$FL_ROOT/build.sh" "$app_dir" full
 }
 
-# ---- 4. Full pipeline (idea -> ... -> release) ----------------------------------
+# ---- 4. Full pipeline (idea -> ... -> release, checkpoint/resume aware) ---------
+# By default a run starts fresh (clears the slug's checkpoints). Pass --resume to
+# continue from the last completed stage instead of re-running every stage.
 pipeline() {
-  local app_idea="$*"
+  local resume=0
+  local app_idea=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --resume) resume=1; shift;;
+      --fresh)  resume=0; shift;;
+      *) app_idea="$app_idea $1"; shift;;
+    esac
+  done
   [ -n "$app_idea" ] || die "fastlane3 pipeline: missing app idea"
   local slug; slug="$(slug_of "$app_idea")"
+  local plan_dir="$FL_TMP/plan3-$slug"
 
-  "$REPO_ROOT/tools/fastlane/checkpoint.sh" clear "$slug" 2>/dev/null || true
+  if [ "$resume" -eq 0 ]; then
+    "$REPO_ROOT/tools/fastlane/checkpoint.sh" clear "$slug" 2>/dev/null || true
+  fi
 
-  local cur="$("$REPO_ROOT/tools/fastlane/checkpoint.sh" resume-from "$slug")"
+  local cur; cur="$("$REPO_ROOT/tools/fastlane/checkpoint.sh" resume-from "$slug")"
 
   leader "Fast Lane 3.0 Pipeline — $app_idea"
+  [ "$resume" -eq 1 ] && info "  resume mode: continuing from '$cur'"
+
+  if [ "$cur" = "DONE" ]; then
+    info "  all pipeline stages already complete for '$slug' — use without --resume to rebuild fresh"
+  fi
 
   # stage: spec
-  if [ "$cur" = "spec" ] || [ "$cur" = "DONE" ]; then
+  if [ "$cur" = "spec" ]; then
     idea "$app_idea"
     local spec_out="$FL_TMP/$slug-app-spec.json"
     "$REPO_ROOT/tools/fastlane/checkpoint.sh" save "$slug" spec "$spec_out"
@@ -140,24 +159,24 @@ pipeline() {
   fi
 
   # stage: arch + modules + taskgraph
-  if [ "$cur" = "arch" ] || [ "$cur" = "DONE" ]; then
-    plan "$FL_TMP/$slug-app-spec.json"
-    "$REPO_ROOT/tools/fastlane/checkpoint.sh" save "$slug" arch "$FL_TMP/plan3/architecture.json"
-    "$REPO_ROOT/tools/fastlane/checkpoint.sh" save "$slug" modules "$FL_TMP/plan3/architecture.json"
-    "$REPO_ROOT/tools/fastlane/checkpoint.sh" save "$slug" taskgraph "$FL_TMP/plan3/taskgraph.json"
+  if [ "$cur" = "arch" ]; then
+    plan "$FL_TMP/$slug-app-spec.json" "$plan_dir"
+    "$REPO_ROOT/tools/fastlane/checkpoint.sh" save "$slug" arch "$plan_dir/architecture.json"
+    "$REPO_ROOT/tools/fastlane/checkpoint.sh" save "$slug" modules "$plan_dir/architecture.json"
+    "$REPO_ROOT/tools/fastlane/checkpoint.sh" save "$slug" taskgraph "$plan_dir/taskgraph.json"
     cur="$("$REPO_ROOT/tools/fastlane/checkpoint.sh" resume-from "$slug")"
   fi
 
   # stage: generate + preflight (Dev-mode only; CI generates via FL2 scaffold)
   if [ "$cur" = "generate" ]; then
     info "  generation + preflight: handled by FL2 scaffold.py in CI (deterministic)"
-    "$REPO_ROOT/tools/fastlane/checkpoint.sh" save "$slug" generate "$FL_TMP/plan3/taskgraph.json"
-    "$REPO_ROOT/tools/fastlane/checkpoint.sh" save "$slug" preflight "$FL_TMP/plan3/architecture.json"
+    "$REPO_ROOT/tools/fastlane/checkpoint.sh" save "$slug" generate "$plan_dir/taskgraph.json"
+    "$REPO_ROOT/tools/fastlane/checkpoint.sh" save "$slug" preflight "$plan_dir/architecture.json"
     cur="$("$REPO_ROOT/tools/fastlane/checkpoint.sh" resume-from "$slug")"
   fi
 
   # stage: build + test + security (FL2 engine; FL3 gates inside)
-  if [ "$cur" = "build" ] || [ "$cur" = "DONE" ]; then
+  if [ "$cur" = "build" ]; then
     info "  build/test/security: run via CI build-all (Fast Lane 2.x engine, FL3 gates)"
     "$REPO_ROOT/tools/fastlane/checkpoint.sh" save "$slug" build "ci"
     "$REPO_ROOT/tools/fastlane/checkpoint.sh" save "$slug" test "ci"
@@ -167,14 +186,12 @@ pipeline() {
   fi
 
   local st; st="$(cd "$REPO_ROOT" && "$REPO_ROOT/tools/fastlane/checkpoint.sh" state "$slug" 2>/dev/null)"
-  python3 - "$st" <<'PY'
-import json,sys
+  printf '%s\n' "$st" | python3 -c 'import json,sys
 try:
     d=json.load(sys.stdin)
     print("\n  checkpoint state:", ", ".join(d.get("completed_stages",[])))
     print("  next stage:      ", d.get("next_stage"))
-except Exception: pass
-PY
+except Exception: pass'
   # FL3 summary: accuracy + benchmark + knowledge
   local num
   num="$(python3 "$FL_ROOT/accuracy.py" score-all "$REPO_ROOT/apps" 2>/dev/null | python3 -c 'import json,sys
@@ -190,16 +207,15 @@ except Exception: print(0)')"
 status() {
   local slug="${1:?usage: fastlane3.sh status <slug>}"
   local st; st="$(cd "$REPO_ROOT" && "$REPO_ROOT/tools/fastlane/checkpoint.sh" state "$slug" 2>/dev/null)"
-  python3 - "$st" <<'PY'
-import json,sys
+  printf '%s\n' "$st" | python3 -c 'import json,sys
 try:
     d=json.load(sys.stdin)
     print("slug:             ", d.get("slug"))
     print("completed stages: ", ", ".join(d.get("completed_stages",[])))
     print("next stage:       ", d.get("next_stage"))
+    print("spec_version:     ", d.get("spec_version"))
 except Exception:
-    print("no checkpoint state for this slug")
-PY
+    print("no checkpoint state for this slug")'
 }
 
 case "${1:-}" in

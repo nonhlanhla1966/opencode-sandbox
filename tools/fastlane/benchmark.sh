@@ -13,7 +13,7 @@ set -u
 # shellcheck source=slib.sh
 . "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/slib.sh"
 
-RUN_STREAM="$FASTLANE_DATA/tmp/runs.jsonl"
+RUN_STREAM="${FL_BENCHMARK_STREAM:-$FASTLANE_DATA/tmp/runs.jsonl}"
 WINDOW="${FL_BENCHMARK_WINDOW:-200}"
 
 require_cmd python3
@@ -35,6 +35,13 @@ except Exception as e:
     print({"benchmark":f"error reading telemetry: {e}"}); sys.exit(0)
 runs=runs[-window:]
 
+# corrupt-telemetry guard: reject implausible totals (millisecond timestamps,
+# broken clocks, unit garbage) so one bad run can never poison the benchmark.
+MAX_SANE_TOTAL_S = 86400  # any single build taking over a day is telemetry noise
+def sane_total(r):
+    t=r.get("total")
+    return isinstance(t,(int,float)) and 0 < t < MAX_SANE_TOTAL_S
+
 def generation_of(r):
     stages=set(r.keys())
     # FL3 runs carry spec_version markers or explicit gen field
@@ -46,11 +53,12 @@ def generation_of(r):
 
 gens={}
 for r in runs:
+    if not sane_total(r):
+        continue
     g=generation_of(r)
-    total=r.get("total")
-    if not isinstance(total,(int,float)) or total<=0: continue
-    gens.setdefault(g,[]).append({"total":total,"complexity":r.get("complexity","UNKNOWN"),
-                                   "slug":r.get("slug"),"cold":r.get("cold_cache",False)})
+    totals=gens.setdefault(g,[])
+    totals.append({"total":r["total"],"complexity":r.get("complexity","UNKNOWN"),
+                   "slug":r.get("slug"),"cold":r.get("cold_cache",False)})
 
 out={"benchmark":"FL1/FL2/FL3 speed comparison","window":len(runs),"generations":{}}
 baseline=None

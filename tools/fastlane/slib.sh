@@ -13,7 +13,10 @@ export FL_ROOT REPO_ROOT FL_TMP FASTLANE_DATA
 mkdir -p "$FL_TMP" "$FASTLANE_DATA"
 
 # ---------- date / time helpers ----------------------------------------------
-now_ms() { date +%s%3N; }
+# now_ms must be real Epoch-milliseconds. `date +%s%3N` is unreliable across
+# GNU/coreutils versions (some emit raw nanoseconds -> 19-digit garbage that
+# breaks every elapsed computation), so derive ms from python3 (guaranteed).
+now_ms() { python3 -c 'import time; print(int(time.time() * 1000))'; }
 now_iso() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 
 # ---------- JSON helpers (python3 backed, atomic writes) ----------------------

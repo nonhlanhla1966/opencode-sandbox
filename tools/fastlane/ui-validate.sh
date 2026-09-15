@@ -26,7 +26,8 @@ report_finding() { # severity check detail
 print(json.dumps({"severity":sys.argv[1],"check":sys.argv[2],"detail":sys.argv[3]}))' "$sev" "$chk" "$detail")"$'\n'
   case "$sev" in
     ERROR) fail=$((fail+1)); err "  [FAIL] U_$chk — $detail";;
-    WARN)  pass=$((pass+1)); warn "  [WARN] U_$chk — $detail";;
+    SKIP)  skipped=$((skipped+1)); warn "  [SKIP] U_$chk — $detail";;
+    WARN)  warn "  [WARN] U_$chk — $detail";;
     PASS)  pass=$((pass+1)); ok "  [PASS] U_$chk";;
   esac
 }
@@ -82,7 +83,7 @@ else
   report_finding ERROR "ID_REFS" "$missing_refs unreferenced/missing view ids"
 fi
 
-# Device-dependent UI checks: honest SKIP when no device
+# Device-dependent UI checks: honest SKIP when no device (never a silent pass)
 if [ -n "$apk" ] && [ -s "$apk" ]; then
   adb="$(command -v adb 2>/dev/null || true)"
   if [ -n "$adb" ] && "$adb" get-state >/dev/null 2>&1; then
@@ -91,15 +92,25 @@ if [ -n "$apk" ] && [ -s "$apk" ]; then
       info "  device screen-capture smoke check (emulator present)"
       report_finding PASS "SCREENSMOKE" "apk installed; UI launch verified by emulator monkey"
     else
-      report_finding WARN "SCREENSMOKE" "apk install on device failed during UI check"
+      report_finding ERROR "SCREENSMOKE" "apk install on device failed during UI check"
     fi
   else
-    report_finding WARN "SCREENSMOKE" "no device/emulator on runner — dynamic UI checks skipped (not silently passed)"
+    report_finding SKIP "SCREENSMOKE" "no device/emulator on runner — dynamic UI smoke check skipped (not silently passed)"
   fi
 fi
 
+if [ "$fail" -gt 0 ]; then
+  status="FAIL"
+elif [ "$skipped" -gt 0 ] && [ "$pass" -eq 0 ]; then
+  status="SKIP"
+elif [ "$skipped" -gt 0 ]; then
+  status="SKIP"
+else
+  status="PASS"
+fi
+
 {
-  echo "{\"gate\":\"C012_UI_TEST\",\"engine\":\"ui-validate.sh\",\"slug\":\"$slug\",\"passed\":$pass,\"failed\":$fail,\"findings\":["
+  echo "{\"gate\":\"C012_UI_TEST\",\"engine\":\"ui-validate.sh\",\"slug\":\"$slug\",\"status\":\"$status\",\"passed\":$pass,\"failed\":$fail,\"skipped\":$skipped,\"findings\":["
   first=1
   while IFS= read -r f; do
     [ -n "$f" ] || continue
@@ -109,7 +120,7 @@ fi
   echo "]}"
 } > "$out"
 
-printf "ui: %d passed, %d failed\n" "$pass" "$fail"
+printf "ui: %d passed, %d failed, %d skipped (status=%s)\n" "$pass" "$fail" "$skipped" "$status"
 [ "$fail" -eq 0 ] || { err "UI_VALIDATION_FAILED"; exit 1; }
 ok "ui validation: pass"
 exit 0

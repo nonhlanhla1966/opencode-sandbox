@@ -49,6 +49,20 @@ record() {
   [ -f "$run_file" ] || die "run file missing: $run_file"
   local run_id run
   run_id="$(python3 -c "import json;print(json.load(open('$run_file')).get('run_id','run'))" 2>/dev/null)"
+  # sanity-check the payload before it poisons the benchmark stream
+  python3 - "$run_file" <<'PY'
+import json,sys
+run_file=sys.argv[1]
+try:
+    run=json.load(open(run_file))
+except Exception as e:
+    print(f"telemetry: unreadable run payload {e}",file=sys.stderr); sys.exit(1)
+total=run.get("total")
+bad = (not isinstance(total,(int,float))) or not (0 < total < 86400)
+if bad:
+    print(f"telemetry: rejecting run {run.get('run_id','?')}: implausible total={total!r}",file=sys.stderr)
+    sys.exit(1)
+PY
   # timeboxed dedupe on the JSONL stream (allow repeats later, keep history sane)
   python3 - "$RUN_STREAM" "$run_id" "$run_file" <<'PY'
 import json,sys,os,time

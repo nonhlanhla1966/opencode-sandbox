@@ -42,7 +42,7 @@ FL3 is layered on top of FL2. Use these extra engines when relevant:
 - Device/UI gates (C011/C012): on a runner with no emulator they MUST report
   `SKIP` with a reason, never a silent pass.
 - See `FASTLANE_3_FINAL_ARCHITECTURE.md` for the full subsystem map; run
-  `bash tools/fastlane/selftest.sh` (67 tests) to verify the engine.
+  `bash tools/fastlane/selftest.sh` (73 tests) to verify the engine.
 
 ## Pipeline per request
 

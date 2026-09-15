@@ -204,13 +204,21 @@ except Exception: print(False)')" = "True" ] \
 # 9.7 Device + UI validation (honest SKIP without emulator)
 bash "$FL_ROOT/device.sh" validate "$appdir" >/dev/null 2>&1 \
   && t "FL3: device validation handles no-device (SKIP)" || f "FL3: device validation errored"
-if [ -f "$FL_TMP/device-app.json" ] 2>/dev/null; then :; fi
 devst="$(bash "$FL_ROOT/device.sh" validate "$appdir" 2>/dev/null | python3 -c 'import json,sys
 try: print(json.load(sys.stdin).get("status",""))
 except Exception: print("")')"
 [ "$devst" = "SKIP" ] && t "FL3: device gate honestly SKIPs without emulator" || f "FL3: device gate status=$devst"
 bash "$FL_ROOT/ui-validate.sh" "$appdir" >/dev/null 2>&1 \
   && t "FL3: ui-validate static checks pass on scaffold" || f "FL3: ui-validate failed on scaffold"
+# dynamic UI smoke must be an explicit SKIP (with reason) when no device — never a silent pass
+dummy_apk="$TMP/dummy.apk"; printf 'fake-apk' > "$dummy_apk"
+bash "$FL_ROOT/ui-validate.sh" "$appdir" "$dummy_apk" >/dev/null 2>&1
+uist="$(python3 -c "
+import json
+try:
+    print(json.load(open('$FL_TMP/ui-$slug.json')).get('status',''))
+except Exception: print('')")"
+[ "$uist" = "SKIP" ] && t "FL3: ui-validate dynamic smoke SKIPs honestly without device" || f "FL3: ui-validate status=$uist"
 
 # 9.8 Accuracy + benchmark engines
 acc="$(python3 "$FL_ROOT/accuracy.py" score "$appdir" 2>/dev/null)"
@@ -218,18 +226,59 @@ acc="$(python3 "$FL_ROOT/accuracy.py" score "$appdir" 2>/dev/null)"
   && t "FL3: accuracy score in range from real evidence" || f "FL3: accuracy score invalid"
 bash "$FL_ROOT/benchmark.sh" compare >/dev/null 2>&1 \
   && t "FL3: benchmark compare runs" || f "FL3: benchmark compare failed"
+
+# benchmark must reject corrupt telemetry and compute a real speed score from
+# clean synthetic samples (injected via FL_BENCHMARK_STREAM, never the live stream)
+synthetic="$TMP/bench-samples.jsonl"
+printf '%s\n' \
+  '{"run_id":"fl1-a","complexity":"SIMPLE","total":120,"generation":"1.0"}' \
+  '{"run_id":"fl2-a","complexity":"SIMPLE","total":80,"generation":"2.0"}' \
+  '{"run_id":"fl3-a","complexity":"SIMPLE","total":40,"generation":"3.0"}' \
+  '{"run_id":"fl3-b","complexity":"MEDIUM","total":60,"generation":"3.0"}' \
+  '{"run_id":"garbage-ms","total":1610480935941060}' \
+  '{"run_id":"garbage-nan","total":"NaN"}' > "$synthetic"
+bch="$(FL_BENCHMARK_STREAM="$synthetic" bash "$FL_ROOT/benchmark.sh" compare 2>/dev/null)"
+bench_ok="$(printf '%s' "$bch" | python3 -c "import json,sys
+d=json.load(sys.stdin)
+t=d['generations']
+ok = (t.get('fl1',{}).get('runs')==1 and t.get('fl2',{}).get('runs')==1
+      and t.get('fl3',{}).get('runs')==2 and d.get('speed_score_vs_fl1')==240.0)
+print(ok)")"
+[ "$bench_ok" = "True" ] \
+  && t "FL3: benchmark rejects corrupt data + computes speed score" || f "FL3: benchmark corruption guard failed: $bch"
 bash "$FL_ROOT/benchmark.sh" report >/dev/null 2>&1 \
   && t "FL3: benchmark report runs" || f "FL3: benchmark report failed"
+bash "$FL_ROOT/knowledge.sh" report >/dev/null 2>&1 \
+  && t "FL3: knowledge report runs" || f "FL3: knowledge report failed"
 
 # 9.9 fastlane3 orchestrator
 bash "$FL_ROOT/fastlane3.sh" idea "A fast experimental app for FL3" >/dev/null 2>&1 \
   && t "FL3: fastlane3 idea emits validated spec" || f "FL3: fastlane3 idea failed"
 bash "$FL_ROOT/fastlane3.sh" plan "$fl3spec" >/dev/null 2>&1 \
   && t "FL3: fastlane3 plan (arch+compat+taskgraph)" || f "FL3: fastlane3 plan failed"
+
+# FL3 spec-coverage contract (gate C014) must pass a clean scaffold
+contract="$(python3 "$FL_ROOT/spec_validate.py" contract "$appdir/app-spec.json" "$appdir/architecture.json" "$appdir" 2>/dev/null || echo '{}')"
+ckt="$(printf '%s' "$contract" | python3 -c 'import json,sys
+try:
+    d=json.load(sys.stdin)
+    print(d.get("features_total",0)>0 and d.get("coverage_percentage",0)>=50)
+except Exception: print(False)')"
+[ "$ckt" = "True" ] \
+  && t "FL3: contract (C014) coverage >= 50% on clean scaffold" || f "FL3: contract under-reports coverage: $contract"
+
 bash "$FL_ROOT/fastlane3.sh" status fl3test >/dev/null 2>&1 \
   && t "FL3: fastlane3 status" || f "FL3: fastlane3 status failed"
+# fastlane3 status must read a real checkpoint, not always report empty
+bash "$FL_ROOT/checkpoint.sh" save fl3test spec "$fl3spec" >/dev/null 2>&1
+[ "$(bash "$FL_ROOT/fastlane3.sh" status fl3test 2>/dev/null | grep -c "completed stages")" -ge 1 ] \
+  && t "FL3: fastlane3 status shows checkpoint stages" || f "FL3: fastlane3 status empty"
+bash "$FL_ROOT/checkpoint.sh" clear fl3test >/dev/null 2>&1
 [ "$(bash "$FL_ROOT/fastlane.sh" full3 "FL3 orchestrator smoke test" 2>&1 | grep -c "FL3 summary")" -ge 1 ] \
   && t "FL3: fastlane3 pipeline completes" || f "FL3: fastlane3 pipeline incomplete"
+# pipeline --resume on a completed run must proceed without re-running every stage
+[ "$(bash "$FL_ROOT/fastlane.sh" full3 --resume "FL3 orchestrator smoke test" 2>&1 | grep -c "all pipeline stages already complete")" -ge 1 ] \
+  && t "FL3: pipeline --resume resumes without re-running" || f "FL3: pipeline --resume incomplete"
 
 echo ""
 echo "==== SELFTEST RESULT: pass=$PASS fail=$FAIL ===="

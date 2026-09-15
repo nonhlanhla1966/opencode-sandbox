@@ -83,7 +83,8 @@ PY
 
 check() {
   local bg="${1:?usage: deps.sh check <build.gradle>}" tmp fail=0 status coord reason
-  leader "Dependency intelligence — $(basename "$(dirname "$bg")")"
+  local slug; slug="$(basename "$(dirname "$bg")")"
+  leader "Dependency intelligence — $slug"
   tmp="$FL_TMP/deps-$$.tsv"
   deps_core "$bg" > "$tmp"
   while IFS=$'\t' read -r status coord reason; do
@@ -93,6 +94,24 @@ check() {
       *)    err "  $coord — NOT ALLOWED ($reason)"; fail=1;;
     esac
   done < "$tmp"
+  # persist artifact for accuracy.py (deps factor uses real policy result)
+  python3 - "$slug" "$tmp" "$fail" > "$FL_TMP/deps-$slug.json" <<'PY'
+import json,sys,time
+slug,tsv,fail=sys.argv[1:4]
+rows=[]
+total=0
+with open(tsv) as fh:
+    for line in fh:
+        parts=line.rstrip("\n").split("\t")
+        if len(parts)<1 or not parts[0]: continue
+        total+=1
+        rows.append({"status":parts[0],"coord":parts[1] if len(parts)>1 else "",
+                     "reason":parts[2] if len(parts)>2 else ""})
+out={"slug":slug,"policy_ok": int(fail)==0,
+     "dependencies":rows,"count":total,
+     "spec_version":"3.0","at":time.strftime("%Y-%m-%dT%H:%M:%SZ",time.gmtime())}
+print(json.dumps(out))
+PY
   rm -f "$tmp"
   if [ "$fail" -eq 1 ]; then err "deps: dependency policy FAILED"; exit 1; fi
   ok "deps: dependency policy OK"

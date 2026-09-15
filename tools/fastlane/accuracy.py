@@ -31,10 +31,35 @@ def load_json(path) -> dict:
         return {}
 
 
+def shared_tmp() -> Path:
+    """The engine-wide FL_TMP dir (where gates/security/deps/perf/coverage land)."""
+    t = os.environ.get("FL_TMP") or os.environ.get("FASTLANE_TMPDIR")
+    if t:
+        return Path(t)
+    r = os.environ.get("REPO_ROOT")
+    if r:
+        return Path(r) / ".fastlane" / "tmp"
+    return Path(".fastlane") / "tmp"
+
+
+def find_artifact(prefix: str, slug: str, app_dir: Path, explicit: str = None) -> Path:
+    """Resolve an evidence artifact: explicit path > shared FL_TMP > app-local tmp."""
+    if explicit and Path(explicit).is_file():
+        return Path(explicit)
+    shared = shared_tmp() / f"{prefix}-{slug}.json"
+    if shared.is_file():
+        return shared
+    local = app_dir / ".fastlane" / "tmp" / f"{prefix}-{slug}.json"
+    if local.is_file():
+        return local
+    return None
+
+
 def gather_evidence(app_dir: Path, apk: str = None,
                     coverage_path: str = None, gates_path: str = None,
-                    test_xml: str = None) -> dict:
-    """Collect real evidence signals from disk."""
+                    test_xml: str = None, deps_path: str = None) -> dict:
+    """Collect real evidence signals from disk (explicit path, shared FL_TMP, then app-local)."""
+    slug = app_dir.name
     ev = {}
 
     # 1. APK present + non-empty + checksum
@@ -60,29 +85,21 @@ def gather_evidence(app_dir: Path, apk: str = None,
             ev["tests"] = {"present": False}
 
     # 3. Gate report
-    if gates_path and Path(gates_path).is_file():
-        ev["gates"] = load_json(gates_path)
-    else:
-        gates_file = app_dir / ".fastlane" / "tmp" / f"gates-{app_dir.name}.json"
-        if gates_file.is_file():
-            ev["gates"] = load_json(gates_file)
-        else:
-            ev["gates"] = {}
+    gates_file = find_artifact("gates", slug, app_dir, gates_path)
+    ev["gates"] = load_json(gates_file) if gates_file else {}
 
     # 4. Spec coverage
-    if coverage_path and Path(coverage_path).is_file():
-        ev["coverage"] = load_json(coverage_path)
-    else:
-        ev["coverage"] = {}
+    cov_file = find_artifact("coverage", slug, app_dir, coverage_path)
+    ev["coverage"] = load_json(cov_file) if cov_file else {}
 
     # 5. Security scan artifact
-    sec_file = app_dir / ".fastlane" / "tmp" / f"security-{app_dir.name}.json"
-    if sec_file.is_file():
+    sec_file = find_artifact("security", slug, app_dir)
+    if sec_file:
         ev["security"] = load_json(sec_file)
 
     # 6. Dependency validation artifact
-    deps_file = app_dir / ".fastlane" / "tmp" / f"deps-{app_dir.name}.json"
-    if deps_file.is_file():
+    deps_file = find_artifact("deps", slug, app_dir, deps_path)
+    if deps_file:
         ev["deps"] = load_json(deps_file)
 
     return ev
@@ -227,13 +244,14 @@ def compute_score(ev: dict) -> float:
 
 def cmd_score(argv):
     if len(argv) < 3:
-        sys.stderr.write("usage: accuracy.py score <app-dir> [--apk apk] [--coverage cov.json] [--gates gates.json] [--tests xml]\n")
+        sys.stderr.write("usage: accuracy.py score <app-dir> [--apk apk] [--coverage cov.json] [--gates gates.json] [--tests xml] [--deps deps.json]\n")
         return 2
     app_dir = Path(argv[2])
     apk = None
     coverage_path = None
     gates_path = None
     test_xml = None
+    deps_path = None
     if "--apk" in argv:
         apk = argv[argv.index("--apk") + 1]
     if "--coverage" in argv:
@@ -242,9 +260,12 @@ def cmd_score(argv):
         gates_path = argv[argv.index("--gates") + 1]
     if "--tests" in argv:
         test_xml = argv[argv.index("--tests") + 1]
+    if "--deps" in argv:
+        deps_path = argv[argv.index("--deps") + 1]
 
     ev = gather_evidence(app_dir, apk=apk, coverage_path=coverage_path,
-                         gates_path=gates_path, test_xml=test_xml)
+                         gates_path=gates_path, test_xml=test_xml,
+                         deps_path=deps_path)
     final, breakdown = compute_score(ev)
     result = {"app": app_dir.name, "accuracy_score": final, "max": 100.0,
               "spec_version": "3.0", "evidence": ev, "breakdown": breakdown}

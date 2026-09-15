@@ -112,7 +112,11 @@ else
 fi
 rm -f "$worker_script"
 
-elapsed=$(( ($(now_ms) - start_ms) / 1000 ))
+elapsed=0
+run_end_ms="$(now_ms)"
+if [ -n "$start_ms" ] && [ -n "$run_end_ms" ] && [ "$run_end_ms" -ge "$start_ms" ]; then
+  elapsed=$(( (run_end_ms - start_ms) / 1000 ))
+fi
 leader "Build complete"
 echo "  Apps total:        $n_apps"
 echo "  Failures:          $failures"

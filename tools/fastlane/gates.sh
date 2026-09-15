@@ -166,7 +166,19 @@ fi
 
 # C012 UI validation (ui-validate.sh) — static checks always run; dynamic SKIP-with-reason
 if bash "$FL_ROOT/ui-validate.sh" "$app_dir" "$apk" >/dev/null 2>&1; then
-  gate C012_UI_TEST PASS "static UI validation clean"
+  ui_status="$(python3 -c "
+import json
+try:
+    r=json.load(open('$FL_TMP/ui-$app_slug.json'))
+    print(r.get('status',''))
+except Exception: print('')"
+  )"
+  case "$ui_status" in
+    PASS) gate C012_UI_TEST PASS "static UI validation clean";;
+    SKIP) gate C012_UI_TEST SKIP "static UI clean; dynamic smoke SKIPPED (no device/emulator)";;
+    "")   gate C012_UI_TEST SKIP "no ui-validate report produced";;
+    *)    gate C012_UI_TEST PASS "static UI validation clean ($ui_status)";;
+  esac
 else
   gate C012_UI_TEST FAIL "UI validation findings"
 fi
@@ -194,6 +206,7 @@ fi
 if [ -f "$app_dir/app-spec.json" ]; then
   if [ -f "$app_dir/architecture.json" ]; then
     cov="$(python3 "$FL_ROOT/spec_validate.py" contract "$app_dir/app-spec.json" "$app_dir/architecture.json" "$app_dir" 2>/dev/null || echo '{}')"
+    [ -n "$cov" ] && printf '%s\n' "$cov" > "$FL_TMP/coverage-$app_slug.json"
     cov_pct="$(printf '%s' "$cov" | python3 -c 'import json,sys
 try: print(int(json.load(sys.stdin).get("coverage_percentage",0)))
 except Exception: print(0)')"

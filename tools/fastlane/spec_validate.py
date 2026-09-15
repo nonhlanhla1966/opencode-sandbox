@@ -237,7 +237,7 @@ def cmd_check(argv):
     }
 
     print(json.dumps(report, indent=1))
-    return 0 if validation["valid"] else 1
+    return 0 if (validation["valid"] and checksum["valid"]) else 1
 
 
 def cmd_checksum(argv):

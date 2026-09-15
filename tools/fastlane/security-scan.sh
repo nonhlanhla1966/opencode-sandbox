@@ -31,8 +31,11 @@ scan_src() {
     if grep -qE "api[_-]?key[[:space:]]*=[[:space:]]*[\"'][^\"']{8,}|password[[:space:]]*=[[:space:]]*[\"'][^\"']{8,}|secret[[:space:]]*=[[:space:]]*[\"'][^\"']{8,}" "$f" 2>/dev/null; then
       add "HIGH" "hardcoded_credential_assignment" "key/password/secret literal" "$rel"
     fi
-    if grep -nE "http://" "$f" 2>/dev/null | head -1 | grep -q .; then
-      line="$(grep -nE "http://" "$f" 2>/dev/null | head -1)"
+    # Plaintext http URLs — but whitelist standard schema/namespace declarations
+    # (Android XML ns, W3C, Gradle, etc.) which are not cleartext traffic.
+    HTTP_WHITELIST='xmlns|schemas\.android\.com|www\.w3\.org|www\.gradle\.org|schemas\.microsoft\.com|apache\.org/licenses|schemas\.xmlsoap\.org'
+    if grep -nE "http://" "$f" 2>/dev/null | grep -Ev "$HTTP_WHITELIST" | head -1 | grep -q .; then
+      line="$(grep -nE "http://" "$f" 2>/dev/null | grep -Ev "$HTTP_WHITELIST" | head -1)"
       add "MEDIUM" "insecure_http_url" "plaintext http: $line" "$rel"
     fi
     if grep -q "setJavaScriptEnabled(true)" "$f" 2>/dev/null; then

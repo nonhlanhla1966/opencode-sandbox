@@ -15,6 +15,7 @@ mode="${2:-full}"
 slug="$(basename "$app_dir")"
 
 [ -d "$app_dir" ] || die "app dir missing: $app_dir"
+app_dir="$(cd "$app_dir" && pwd)"   # absolute, so repair/subprocesses work from any CWD
 
 # ---- resolve java/gradle ---------------------------------------------------
 require_cmd java
@@ -147,15 +148,21 @@ if ! bash "$REPO_ROOT/scripts/verify-apk.sh" "$apk" "$appid"; then
 fi
 "$REPO_ROOT/tools/fastlane/telemetry.sh" stage-stop verifying
 
-total_s=$(( ($(now_ms) - start_ms) / 1000 ))
+total_s=0
+run_end_ms="$(now_ms)"
+if [ -n "$start_ms" ] && [ -n "$run_end_ms" ] && [ "$run_end_ms" -ge "$start_ms" ]; then
+  total_s=$(( (run_end_ms - start_ms) / 1000 ))
+fi
 sha="$(sha256sum "$apk" | awk '{print $1}')"
 sz="$(du -h "$apk" | cut -f1)"
 
 # ---- Fast Lane 3.0 accuracy score (real artifacts only) -----------------------
 acc_field=""
 if [ -f "$FL_ROOT/accuracy.py" ]; then
-  acc="$(python3 "$FL_ROOT/accuracy.py" score "$app_dir" --apk "$apk" \
-         --gates "$FL_TMP/gates-$slug.json" 2>/dev/null || echo '{}')"
+  acc_args=("score" "$app_dir" --apk "$apk" --gates "$FL_TMP/gates-$slug.json")
+  [ -f "$FL_TMP/coverage-$slug.json" ] && acc_args+=(--coverage "$FL_TMP/coverage-$slug.json")
+  [ -f "$FL_TMP/deps-$slug.json" ] && acc_args+=(--deps "$FL_TMP/deps-$slug.json")
+  acc="$(python3 "$FL_ROOT/accuracy.py" "${acc_args[@]}" 2>/dev/null || echo '{}')"
   accuracy_score="$(printf '%s' "$acc" | python3 -c 'import json,sys
 try: print(json.load(sys.stdin).get("accuracy_score","null"))
 except Exception: print("null")' 2>/dev/null || echo "null")"
