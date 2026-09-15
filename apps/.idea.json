@@ -1,0 +1,90 @@
+{
+ "apis": [
+  "openai-compatible",
+  "generic rest"
+ ],
+ "application_id": "com.appfactory.messenger-pro-encrypted-messaging-groups-unread-counts-profiles-contacts-list-detail-edit-delete-forward-state-camera-gallery-audio-video-mic-pin-mute-archive-notifications-offline-sync-rest-websocket-settings-privacy-block-report",
+ "archetype": "conversation",
+ "auth": "none",
+ "complexity": {
+  "factors": [
+   "7 screens",
+   "multiple permissions",
+   "camera",
+   "network API",
+   "notifications",
+   "media handling",
+   "offline/database",
+   "realtime/streaming",
+   "messaging",
+   "security/crypto",
+   "statistics"
+  ],
+  "level": "EXTREME",
+  "score": 100
+ },
+ "data": {
+  "entities": [
+   {
+    "fields": "text, timestamp",
+    "name": "chat/messaging"
+   },
+   {
+    "fields": "text, timestamp",
+    "name": "crypto/secure"
+   }
+  ]
+ },
+ "estimate": {
+  "band": "5-10+ minutes",
+  "build_time_seconds": 420
+ },
+ "features": [
+  "chat/messaging",
+  "crypto/secure",
+  "offline-first"
+ ],
+ "final": true,
+ "generated_by": "fastlane-analyze-v1",
+ "media": [
+  "camera",
+  "audio",
+  "video",
+  "image-processing"
+ ],
+ "modules": [
+  "storage-sqlite",
+  "http-rest",
+  "notifications",
+  "settings",
+  "media-image"
+ ],
+ "name": "Messenger Pro encrypted messaging, groups, unread counts, profiles/contacts, list/detail, edit/delete/forward, state, camera/gallery/audio/video/mic, pin/mute/archive, notifications, offline sync, REST/WebSocket, settings/privacy, block/report",
+ "navigation": "List->Detail navigation with a Settings screen reachable from the toolbar; system back returns Home.",
+ "notifications": true,
+ "permissions": [
+  "android.permission.CAMERA",
+  "android.permission.INTERNET",
+  "android.permission.POST_NOTIFICATIONS",
+  "android.permission.RECORD_AUDIO"
+ ],
+ "screens": [
+  "Home",
+  "Settings",
+  "List",
+  "Detail",
+  "Editor/Form",
+  "Stats",
+  "Notifications"
+ ],
+ "slug": "messenger-pro-encrypted-messaging-groups-unread-counts-profiles-contacts-list-detail-edit-delete-forward-state-camera-gallery-audio-video-mic-pin-mute-archive-notifications-offline-sync-rest-websocket-settings-privacy-block-report",
+ "storage": [
+  "sqlite",
+  "datastore/prefs"
+ ],
+ "summary": "A chat/messaging crypto/secure offline-first app: Messenger Pro encrypted messaging, groups, unread counts, profiles/contacts, list/detail, edit/delete/forward, state, camera/gallery/audio/video/mic, pin/mute/archive, notifications, offline sync, REST/WebSocket, settings/privacy, block/report",
+ "testing": [
+  "database",
+  "api"
+ ]
+}

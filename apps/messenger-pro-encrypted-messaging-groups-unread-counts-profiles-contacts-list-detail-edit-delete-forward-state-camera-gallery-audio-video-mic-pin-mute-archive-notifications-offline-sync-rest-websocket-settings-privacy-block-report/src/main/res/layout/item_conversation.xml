@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="10dp"
+    android:gravity="center_vertical">
+
+    <TextView
+        android:id="@+id/conversation_avatar"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@drawable/avatar_bg"
+        android:gravity="center"
+        android:textColor="@color/avatar_text"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginLeft="10dp">
+
+        <TextView
+            android:id="@+id/conversation_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_light"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/conversation_preview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/muted_fg"
+            android:textSize="13sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="end">
+
+        <TextView
+            android:id="@+id/conversation_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/muted_fg"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/conversation_unread"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="22dp"
+            android:minHeight="22dp"
+            android:background="@drawable/unread_badge"
+            android:gravity="center"
+            android:textColor="@color/unread_badge_text"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+    </LinearLayout>
+</LinearLayout>

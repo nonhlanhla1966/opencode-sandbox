@@ -1,0 +1,22 @@
+<resources>
+    <color name="primary">#FF075E54</color>
+    <color name="secondary">#FF25D366</color>
+    <color name="accent">#FF34B7F1</color>
+    <color name="bg_light">#FFFAFAFA</color>
+    <color name="bg_dark">#FF121212</color>
+    <color name="text_light">#FF212121</color>
+    <color name="text_dark">#FFE0E0E0</color>
+    <color name="ic_launcher_background">#FF075E54</color>
+    <color name="bubble_me">#FFDCF8C6</color>
+    <color name="bubble_other">#FFFFFFFF</color>
+    <color name="bubble_me_text">#FF111111</color>
+    <color name="bubble_other_text">#FF111111</color>
+    <color name="unread_badge">#FF25D366</color>
+    <color name="unread_badge_text">#FFFFFFFF</color>
+    <color name="avatar_bg">#FF128C7E</color>
+    <color name="avatar_text">#FFFFFFFF</color>
+    <color name="muted_fg">#FF8A8A8A</color>
+    <color name="divider">#FFE0E0E0</color>
+    <color name="tick_sent">#FF999999</color>
+    <color name="tick_seen">#FF34B7F1</color>
+</resources>

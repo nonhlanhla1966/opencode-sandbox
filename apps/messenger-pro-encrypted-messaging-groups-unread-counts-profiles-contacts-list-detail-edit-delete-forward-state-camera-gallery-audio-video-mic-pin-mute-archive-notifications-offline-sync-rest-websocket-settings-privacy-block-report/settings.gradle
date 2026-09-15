@@ -1,0 +1,14 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+rootProject.name = "messenger-pro-encrypted-messaging-groups-unread-counts-profiles-contacts-list-detail-edit-delete-forward-state-camera-gallery-audio-video-mic-pin-mute-archive-notifications-offline-sync-rest-websocket-settings-privacy-block-report"

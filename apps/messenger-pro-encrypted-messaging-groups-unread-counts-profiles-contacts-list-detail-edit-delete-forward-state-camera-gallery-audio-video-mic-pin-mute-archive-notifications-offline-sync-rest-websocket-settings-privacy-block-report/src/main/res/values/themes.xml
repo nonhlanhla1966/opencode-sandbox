@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.AppFactory" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:colorPrimary">@color/primary</item>
+        <item name="android:colorAccent">@color/accent</item>
+        <item name="android:windowBackground">@color/bg_light</item>
+        <item name="android:textColorPrimary">@color/text_light</item>
+    </style>
+
+    <style name="Theme.AppFactory.Light" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:colorPrimary">#FF075E54</item>
+        <item name="android:colorAccent">#FF34B7F1</item>
+        <item name="android:windowBackground">#FFFAFAFA</item>
+        <item name="android:textColorPrimary">#FF212121</item>
+    </style>
+
+    <style name="Theme.AppFactory.Dark" parent="android:Theme.Material.NoActionBar">
+        <item name="android:colorPrimary">#FF128C7E</item>
+        <item name="android:colorAccent">#FF34B7F1</item>
+        <item name="android:windowBackground">#FF0F0F0F</item>
+        <item name="android:textColorPrimary">#FFE0E0E0</item>
+    </style>
+</resources>
