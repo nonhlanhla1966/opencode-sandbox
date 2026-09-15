@@ -133,12 +133,6 @@ jobs:
             echo "## Fast Lane 3.0"
             acc="$(python3 tools/fastlane/accuracy.py score-all apps 2>/dev/null || echo '{}')"
             echo '```json'
-            printf '%s\n' "$acc" | python3 -c 'import json,sys
-try:
-    d=json.load(sys.stdin)
-    for a in d.get("apps",[]):
-        print(f"{a[\"app\"]:<32} accuracy={a.get(\"accuracy_score\")}/100")
-except Exception:
-    print("no accuracy data")' || true
+            printf '%s\n' "$acc" | python3 -c 'import json,sys; d=json.load(sys.stdin); [print("{:<32} accuracy={}/100".format(a.get("app"), a.get("accuracy_score"))) for a in d.get("apps",[])]' || echo "no accuracy data"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
