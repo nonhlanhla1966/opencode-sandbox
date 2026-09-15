@@ -122,6 +122,10 @@ if [ "$mode" = "full" ] && [ "${FL_SKIP_LINT:-0}" != "1" ] && command -v aapt2 >
 fi
 
 # ---- gates + security + perf + verify -----------------------------------------
+"$REPO_ROOT/tools/fastlane/telemetry.sh" stage-start preflighting
+bash "$REPO_ROOT/tools/fastlane/perf.sh" "$app_dir" "$apk"
+"$REPO_ROOT/tools/fastlane/telemetry.sh" stage-stop preflighting
+
 "$REPO_ROOT/tools/fastlane/telemetry.sh" stage-start gates
 eta QUALITY-GATES
 if ! bash "$REPO_ROOT/tools/fastlane/gates.sh" "$app_dir" "$apk" --strict; then
@@ -133,8 +137,6 @@ fi
 "$REPO_ROOT/tools/fastlane/telemetry.sh" stage-start security
 bash "$REPO_ROOT/tools/fastlane/security-scan.sh" "$app_dir" || exit 1
 "$REPO_ROOT/tools/fastlane/telemetry.sh" stage-stop security
-
-bash "$REPO_ROOT/tools/fastlane/perf.sh" "$app_dir" "$apk"
 
 # ---- APK verify -----------------------------------------------------------------
 "$REPO_ROOT/tools/fastlane/telemetry.sh" stage-start verifying

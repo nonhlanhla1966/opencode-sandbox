@@ -52,16 +52,24 @@ else
 fi
 
 # XML well-formedness of all layouts
-xml_bad=0
+xml_bad_file="$FL_TMP/xml-bad-$$.list"
+xml_list="$FL_TMP/xml-files-$$.list"
+: > "$xml_bad_file"
 if [ -d "$res_dir" ]; then
+  find "$res_dir" -name "*.xml" 2>/dev/null > "$xml_list"
   while IFS= read -r l; do
-    python3 -c "import sys,xml.etree.ElementTree as ET; ET.parse(sys.argv[1])" "$l" 2>/dev/null || { xml_bad=1; report_finding ERROR "XML_WELLFORMED" "bad XML: $l"; }
-  done < <(find "$res_dir" -name "*.xml" 2>/dev/null)
+    [ -n "$l" ] || continue
+    python3 -c "import sys,xml.etree.ElementTree as ET; ET.parse(sys.argv[1])" "$l" 2>/dev/null || {
+      echo "$l" >> "$xml_bad_file"
+      report_finding ERROR "XML_WELLFORMED" "bad XML: $l"
+    }
+  done < "$xml_list"
 fi
-[ "$xml_bad" -eq 0 ] && report_finding PASS "XML_WELLFORMED" "all layout/resources XML well-formed"
+[ ! -s "$xml_bad_file" ] && report_finding PASS "XML_WELLFORMED" "all layout/resources XML well-formed"
+rm -f "$xml_bad_file" "$xml_list"
 
 # View id references resolve between code and layouts (R.id.* referenced vs declared)
-missing_refs="$(bash "$FL_ROOT/preflight.py" check "$app_dir" 2>/dev/null | python3 -c '
+missing_refs="$(python3 "$FL_ROOT/preflight.py" check "$app_dir" 2>/dev/null | python3 -c '
 import json,sys
 try:
     r=json.load(sys.stdin)

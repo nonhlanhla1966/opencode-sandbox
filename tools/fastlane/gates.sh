@@ -195,7 +195,7 @@ if [ -f "$app_dir/app-spec.json" ]; then
   if [ -f "$app_dir/architecture.json" ]; then
     cov="$(python3 "$FL_ROOT/spec_validate.py" contract "$app_dir/app-spec.json" "$app_dir/architecture.json" "$app_dir" 2>/dev/null || echo '{}')"
     cov_pct="$(printf '%s' "$cov" | python3 -c 'import json,sys
-try: print(json.load(sys.stdin).get("coverage_percentage",0))
+try: print(int(json.load(sys.stdin).get("coverage_percentage",0)))
 except Exception: print(0)')"
     cov_covered="$(printf '%s' "$cov" | python3 -c 'import json,sys
 try: print(json.load(sys.stdin).get("features_covered",0))

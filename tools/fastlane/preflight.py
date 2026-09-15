@@ -117,24 +117,29 @@ def check_manifest_xml(app_dir: Path, manifest: Path) -> list:
 
 
 def check_duplicate_classes(app_dir: Path) -> list:
-    """Check for duplicate class names across the source tree."""
+    """Check for duplicate class names within the same package.
+
+    Java allows the same class name in different packages; only duplicates in
+    the SAME package are errors.
+    """
     findings = []
-    class_locations = {}
+    class_locations = {}  # (package, class_name) -> file
     src_dir = app_dir / "src"
     if not src_dir.is_dir():
         return findings
-    for java_file in src_dir.rglob("*.java"):
+    for java_file in sorted(src_dir.rglob("*.java")):
         content = java_file.read_text(errors="ignore")
-        for m in re.finditer(r'(?:public\s+|final\s+)*class\s+(\w+)', content):
+        pkg_m = re.search(r'^package\s+([\w.]+);', content, re.MULTILINE)
+        pkg = pkg_m.group(1) if pkg_m else ""
+        for m in re.finditer(r'(?:public\s+|final\s+|static\s+)*class\s+(\w+)', content):
             class_name = m.group(1)
-            if class_name in class_locations:
+            key = (pkg, class_name)
+            if key in class_locations:
                 findings.append({"severity": "ERROR", "check": "duplicate_classes",
-                                 "finding": f"duplicate class {class_name}: "
-                                            f"{class_locations[class_name]} and {java_file.relative_to(app_dir)}"})
+                                 "finding": f"duplicate class {class_name} in package {pkg or '<default>'} "
+                                            f"({class_locations[key]} and {java_file.relative_to(app_dir)})"})
             else:
-                # Track first occurrence if it looks like a top-level declaration
-                if m.start() < len(content) * 0.5:
-                    class_locations[class_name] = str(java_file.relative_to(app_dir))
+                class_locations[key] = str(java_file.relative_to(app_dir))
     return findings
 
 
