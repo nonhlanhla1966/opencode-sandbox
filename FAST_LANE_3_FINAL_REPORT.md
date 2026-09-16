@@ -1,9 +1,9 @@
 # Fast Lane 3.0 — Final Autonomous AppFactory Architecture Report
 
-**Spec:** `fastlane3_spec.txt` (Section 40 deliverable) · **Date:** 2026-09-15
+**Spec:** `fastlane3_spec.txt` (Section 40 deliverable) · **Date:** 2026-09-16
 **Baseline commit:** `bbde668` (Fast Lane 3.0 final architecture) + gate-hardening
-passes `a2d3048`, `c3f2810`, and the "FL3 maintenance hardening" commit that
-follows (`selftest 73/73`).
+passes `a2d3048`, `c3f2810`, `a5037ad`, and `c65172e` (the "FL3 maintenance
+hardening" commits; selftest now **75/75**).
 
 This is the maintenance release documenting the Fast Lane 3.0 upgrade. Per the
 spec, this is the **final major architecture**: future work ships as `3.0.x` /
@@ -217,13 +217,14 @@ batch is built. Current value: **pending CI measurement.**
 
 ## 25. Tests passed/failed
 
-- Engine selftest: **73/73 PASS** (34 FL2 baseline + 39 FL3), no SDK required
-  (last run 2026-09-15, 1m 51s wall).
+- Engine selftest: **75/75 PASS** (34 FL2 baseline + 41 FL3), no SDK required
+  (last run 2026-09-16 on the CI runner, all green).
 - Pre-FL3 baseline: 34/34 PASS (unchanged, preserved).
-- CI JVM unit tests: the most recent monitored `main` build run (Sep 15)
-  **passed all steps** in 4m 16s; the earlier Sep 14 run that failed did so on
-  app JVM tests (chatbot settings/syntax-highlight tests), unrelated to the FL3
-  engines and resolved by later scaffold fixes.
+- CI JVM unit tests: the most recent monitored `main` build run (Sep 16,
+  commit `c65172e`) **passed all steps** in 4m 38s — all 10 app workers OK, 0
+  failed gates. The Sep 14/15 runs that failed did so on app JVM tests
+  (chatbot settings/syntax-highlight tests) and FL3 telemetry/security/C012
+  false positives, all resolved by the hardening commits.
 - Local JVM suite: 100 tests OK (exit 0) on a prior check.
 
 ## 26. Quality gates passed / skipped / failed
@@ -324,7 +325,7 @@ unmeasured speedup is asserted.
    into real device/UI validation.
 4. Optionally backfill `architecture.json` for pre-FL3 apps so C014 covers the
    whole app tree.
-5. Keep `selftest.sh` at ≥73 tests; gate any future 3.x change on it plus a CI
+5. Keep `selftest.sh` at ≥75 tests; gate any future 3.x change on it plus a CI
    benchmark sample before claiming speed improvements.
 6. No Fast Lane 4.0: ship future capability as 3.0.x/3.1.x maintenance releases
    per the spec.
