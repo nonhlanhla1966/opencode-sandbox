@@ -46,7 +46,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Prepare cold-cache benchmark
-        if: inputs.cold == 'true'
+        if: inputs.cold
         run: |
           rm -rf "$GRADLE_USER_HOME"
           echo "cold-cache benchmark: wiped \$GRADLE_USER_HOME so this run builds from empty caches"
@@ -72,7 +72,7 @@ jobs:
 
       - name: Fast Lane build (estimate + compile + tests + gates + security + verify)
         env:
-          FL_COLD_CACHE: ${{ inputs.cold == 'true' && '1' || '0' }}
+          FL_COLD_CACHE: ${{ inputs.cold && '1' || '0' }}
         run: |
           bash tools/fastlane/build-all.sh --apps "$APPS" -j 2
 
