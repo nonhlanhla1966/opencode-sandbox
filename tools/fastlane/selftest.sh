@@ -176,6 +176,22 @@ printf 'not xml at all' > "$bad2/src/main/AndroidManifest.xml"
 printf 'package x;\npublic class Dupe{}\n' > "$bad2/src/main/java/x/A.java"
 printf 'package x;\npublic class Dupe{}\n' > "$bad2/src/main/java/x/B.java"
 python3 "$FL_ROOT/preflight.py" check "$bad2" >/dev/null 2>&1 && f "FL3: preflight missed errors" || t "FL3: preflight detects errors"
+# android.R.id.* framework references (e.g. simple_list_item_2) must not be
+# flagged as missing app view ids; genuinely missing ids must still be flagged
+fref="$TMP/fl3-fref"; rm -rf "$fref"; mkdir -p "$fref/src/main/res/layout" "$fref/src/main/java/x"
+printf 'package x; public class C { void v(){ findViewById(R.id.mine); findViewById(android.R.id.text1); findViewById(android.R.id.text2); findViewById(R.id.extra); } }' > "$fref/src/main/java/x/C.java"
+printf '<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"><TextView android:id="@+id/mine"/></LinearLayout>' > "$fref/src/main/res/layout/l.xml"
+fout="$(python3 "$FL_ROOT/preflight.py" check "$fref" 2>/dev/null)"
+printf '%s' "$fout" | python3 -c 'import json,sys
+d=json.load(sys.stdin)
+bad=[f["finding"] for f in d.get("findings",[]) if f.get("check")=="missing_references"]
+assert not any(k in " ".join(bad) for k in ("text1","text2")), bad' >/dev/null 2>&1 \
+  && t "FL3: preflight ignores framework android.R.id refs" || f "FL3: preflight flagged android.R.id refs"
+printf '%s' "$fout" | python3 -c 'import json,sys
+d=json.load(sys.stdin)
+bad=[f["finding"] for f in d.get("findings",[]) if f.get("check")=="missing_references"]
+assert any("extra" in b for b in bad), bad' >/dev/null 2>&1 \
+  && t "FL3: preflight still flags genuinely missing ids" || f "FL3: preflight lost genuine missing-id check"
 pref="$(python3 "$FL_ROOT/preflight.py" predict "$bad2" "$TMP/kotlin.log" 2>/dev/null)"
 [ "$(printf '%s' "$pref" | python3 -c 'import json,sys;print(json.load(sys.stdin).get("matched",False))')" != "False" ] \
   && t "FL3: predictive error correlation" || t "FL3: predictive errors handle unknown gracefully"

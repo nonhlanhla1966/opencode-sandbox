@@ -189,9 +189,11 @@ def check_missing_references(app_dir: Path) -> list:
                 pass
 
     # Check Java references to view ids exist in layouts
+    # ``(?<![\w.])`` excludes framework ids referenced as android.R.id.* which
+    # are resolved by the Android SDK, not by the app's own layouts.
     for java_file in src_dir.rglob("*.java"):
         content = java_file.read_text(errors="ignore")
-        for m in re.finditer(r'R\.id\.(\w+)', content):
+        for m in re.finditer(r'(?<![\w.])R\.id\.(\w+)', content):
             ref_id = m.group(1)
             if ref_id not in declared_ids:
                 # Might be referenced but defined elsewhere (view binding); only flag missing if also referenced as @+id elsewhere

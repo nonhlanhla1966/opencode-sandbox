@@ -46,13 +46,19 @@ note="debug build (expected)"
 budget_ok="true"
 if [ "$apk_ok" != "true" ]; then budget_ok="false"; fi
 
-python3 -c "
-import json,sys
-json.dump({'app':'$slug','apk_bytes':$apk_bytes,'apk_size':'$apk_size',
-           'apk_size_ok':$apk_ok,'dex_methods':$dex_methods,
-           'budget_ok':$budget_ok,
-           'notes':'$note'},open('$out','w'),indent=1)
-"
+python3 - "$out" "$slug" "$apk_bytes" "$apk_size" "$apk_ok" "$dex_methods" "$budget_ok" "$note" <<'PY'
+import json, sys
+out, slug, apk_bytes, apk_size, apk_ok, dex_methods, budget_ok, note = sys.argv[1:]
+json.dump({
+    "app": slug,
+    "apk_bytes": int(apk_bytes or 0),
+    "apk_size": apk_size,
+    "apk_size_ok": apk_ok == "true",
+    "dex_methods": int(dex_methods or 0),
+    "budget_ok": budget_ok == "true",
+    "notes": note,
+}, open(out, "w"), indent=1)
+PY
 
 printf '  %-16s %s\n' "APK size" "$apk_size"
 printf '  %-16s %s\n' "APK bytes" "$apk_bytes"

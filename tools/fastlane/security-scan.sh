@@ -8,6 +8,7 @@ set -u
 . "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/slib.sh"
 
 app_dir="${1:?usage: security-scan.sh <app-dir>}"
+slug="$(basename "$app_dir")"
 report="$FL_TMP/security-$(basename "$app_dir").json"
 findings=()
 
@@ -114,16 +115,35 @@ scan_deps
 scan_metadata
 
 critical=0; high=0; medium=0; low=0; info=0
-for f in "${findings[@]:-}"; do
-  sev="$(python3 -c "import json;print(json.loads('''${f}''')['severity'])")"
-  case "$sev" in
-    CRITICAL) critical=$((critical+1));;
-    HIGH) high=$((high+1));;
-    MEDIUM) medium=$((medium+1));;
-    LOW) low=$((low+1));;
-    *) info=$((info+1));;
-  esac
-done
+findings_json="$FL_TMP/findings-$slug-$$.json"
+summary_out="$FL_TMP/findings-summary-$slug-$$.out"
+{
+  echo "["
+  first=1
+  for f in "${findings[@]:-}"; do
+    [ -n "$f" ] || continue
+    if [ "$first" -eq 1 ]; then first=0; else echo ","; fi
+    printf '%s' "$f"
+  done
+  echo "]"
+} > "$findings_json"
+
+python3 - "$findings_json" > "$summary_out" <<'PY'
+import json, sys
+xs = json.load(open(sys.argv[1], encoding="utf-8"))
+counts = {"CRITICAL":0, "HIGH":0, "MEDIUM":0, "LOW":0, "INFO":0}
+rows = []
+for x in xs:
+    sev = x.get("severity", "INFO") if isinstance(x, dict) else "INFO"
+    if sev not in counts:
+        sev = "INFO"
+    counts[sev] += 1
+    rows.append((sev, x.get("name", "?"), str(x.get("where", ""))))
+print(counts["CRITICAL"], counts["HIGH"], counts["MEDIUM"], counts["LOW"], counts["INFO"])
+for sev, name, where in rows:
+    print("%-9s %-34s %s" % (sev, name[:34], where))
+PY
+read -r critical high medium low info < "$summary_out"
 
 {
   echo "{\"scan\":\"security\",\"critical\":$critical,\"high\":$high,"
@@ -137,15 +157,11 @@ done
   echo "]}"
 } > "$report"
 
-if [ "${#findings[@]:-0}" -gt 0 ]; then
+if [ "${#findings[@]}" -gt 0 ]; then
   printf '%-9s %-34s %s\n' "SEV" "FINDING" "WHERE" >&2
-  for f in "${findings[@]:-}"; do
-    name="$(python3 -c "import json;print(json.loads('''${f}''')['name'])")"
-    where="$(python3 -c "import json;print(json.loads('''${f}''')['where'])")"
-    sev="$(python3 -c "import json;print(json.loads('''${f}''')['severity'])")"
-    printf '%-9s %-34s %s\n' "$sev" "$name" "$where" >&2
-  done
+  sed -n '2,$p' "$summary_out" >&2
 fi
+rm -f "$findings_json" "$summary_out"
 
 if [ "$critical" -gt 0 ] || [ "$high" -gt 0 ]; then
   err "security: CRITICAL($critical)/HIGH($high) findings -> release blocked"

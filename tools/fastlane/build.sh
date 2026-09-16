@@ -175,15 +175,23 @@ except Exception: print("null")' 2>/dev/null || echo "null")"
 fi
 
 # ---- telemetry record -------------------------------------------------------------
-python3 -c "
-import json,os
-run={'run_id':os.environ.get('GITHUB_RUN_ID','local')+'-'+'$slug','complexity':'$complexity',
-     'cold_cache':os.environ.get('FL_COLD_CACHE','0')=='1',
-     'compiling':0,'testing':0,'linting':0,'gates':0,'security':0,'verifying':0,
-     'total':$total_s,'apps':1,'slug':'$slug','generation':'3.0'$acc_field,
-     'recorded_at':'$(now_iso)'}
-json.dump(run,open('$FL_TMP/run-$slug.json','w'))
-"
+python3 - "$FL_TMP/run-$slug.json" "$slug" "$complexity" "$total_s" "${accuracy_score:-null}" "$(now_iso)" <<'PY'
+import json, os, sys
+out, slug, complexity, total_s, acc_score, recorded_at = sys.argv[1:7]
+run = {
+    "run_id": os.environ.get("GITHUB_RUN_ID", "local") + "-" + slug,
+    "complexity": complexity,
+    "cold_cache": os.environ.get("FL_COLD_CACHE", "0") == "1",
+    "compiling": 0, "testing": 0, "linting": 0,
+    "gates": 0, "security": 0, "verifying": 0,
+    "total": int(total_s or 0),
+    "apps": 1, "slug": slug, "generation": "3.0",
+    "recorded_at": recorded_at,
+}
+if acc_score != "null":
+    run["accuracy_score"] = float(acc_score)
+json.dump(run, open(out, "w"))
+PY
 "$REPO_ROOT/tools/fastlane/telemetry.sh" record "$FL_TMP/run-$slug.json" >/dev/null 2>&1 || true
 
 ok "BUILD_OK: $slug apk=$apk size=$sz sha=${sha:0:16}… total=${total_s}s"
