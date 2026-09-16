@@ -1,0 +1,70 @@
+{
+ "apis": [],
+ "application_id": "com.appfactory.a-plant-identification-app-that-takes-a-photo-of-a-leaf-with-the-camera-identifies-the-plant-species-stores-the-identification-history-offline-in-a-local-database-and-shows-care-tips-for-each-identified-plant",
+ "archetype": "display",
+ "assumptions": [
+  {
+   "key": "default_apis",
+   "note": "No API requirements specified; assuming offline-only where applicable"
+  },
+  {
+   "key": "default_auth",
+   "note": "No authentication specified; using none"
+  }
+ ],
+ "auth": "none",
+ "checksum_sha256": "e217b37cb7ec0cb5a308fc4bc0bc0ddc934b8e334a92cd89dac29adb3e8e2677",
+ "complexity": {
+  "factors": [
+   "camera",
+   "media handling",
+   "offline/database"
+  ],
+  "level": "MEDIUM",
+  "score": 30
+ },
+ "data": {
+  "entities": [
+   {
+    "fields": "text, timestamp",
+    "name": "offline-first"
+   }
+  ]
+ },
+ "estimate": {
+  "band": "2-5 minutes",
+  "build_time_seconds": 120
+ },
+ "features": [
+  "offline-first"
+ ],
+ "final": true,
+ "generated_by": "fastlane-analyze-v3",
+ "media": [
+  "camera",
+  "image-processing"
+ ],
+ "modules": [
+  "storage-sqlite",
+  "media-image"
+ ],
+ "name": "A plant identification app that takes a photo of a leaf with the camera, identifies the plant species, stores the identification history offline in a local database, and shows care tips for each identified plant",
+ "navigation": "Single-activity flow with back navigation between screens.",
+ "notifications": false,
+ "permissions": [
+  "android.permission.CAMERA"
+ ],
+ "screens": [
+  "Home",
+  "List"
+ ],
+ "slug": "a-plant-identification-app-that-takes-a-photo-of-a-leaf-with-the-camera-identifies-the-plant-species-stores-the-identification-history-offline-in-a-local-database-and-shows-care-tips-for-each-identified-plant",
+ "spec_version": "3.0",
+ "storage": [
+  "sqlite"
+ ],
+ "summary": "A offline-first app: A plant identification app that takes a photo of a leaf with the camera, identifies the plant species, stores the identification history offline in a local database, and shows care tips for each identified plant",
+ "testing": [
+  "database"
+ ]
+}

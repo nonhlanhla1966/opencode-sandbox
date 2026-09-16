@@ -1,0 +1,121 @@
+{
+ "apis": [],
+ "application_id": "com.appfactory.a-plant-identification-app-that-takes-a-photo-of-a-leaf-with-the-camera-identifies-the-plant-species-stores-the-identification-history-offline-in-a-local-database-and-shows-care-tips-for-each-identified-plant",
+ "archetype": "display",
+ "database": {
+  "engine": "sqlite",
+  "entities": [
+   {
+    "fields": "text, timestamp",
+    "name": "offline-first"
+   }
+  ],
+  "versioned_migrations": true
+ },
+ "layers": [
+  "ui",
+  "logic",
+  "persistence",
+  "network"
+ ],
+ "module_compat": {
+  "json": {
+   "api": 21,
+   "level": "OFFLINE",
+   "test": "unit"
+  },
+  "media-image": {
+   "api": 21,
+   "level": "DEVICE",
+   "test": "manual/ui"
+  },
+  "settings": {
+   "api": 21,
+   "level": "OFFLINE",
+   "test": "unit"
+  },
+  "storage-sqlite": {
+   "api": 21,
+   "level": "OFFLINE",
+   "test": "unit+db"
+  },
+  "text": {
+   "api": 21,
+   "level": "OFFLINE",
+   "test": "unit"
+  },
+  "time": {
+   "api": 21,
+   "level": "OFFLINE",
+   "test": "unit"
+  },
+  "validation": {
+   "api": 21,
+   "level": "OFFLINE",
+   "test": "unit"
+  }
+ },
+ "modules": [
+  "storage-sqlite",
+  "media-image",
+  "json",
+  "text",
+  "validation",
+  "time",
+  "settings"
+ ],
+ "name": "A plant identification app that takes a photo of a leaf with the camera, identifies the plant species, stores the identification history offline in a local database, and shows care tips for each identified plant",
+ "permissions": [
+  {
+   "note": "request at runtime for API>=23; deny-safe UI",
+   "permission": "android.permission.CAMERA"
+  }
+ ],
+ "release": {
+  "artifact": "debug APK",
+  "signing": "CI debug-signed APK (installable, unsigned=false)",
+  "verify": [
+   "compile",
+   "unit tests",
+   "lint",
+   "resource/XML",
+   "manifest",
+   "security scan",
+   "apk badging",
+   "apksigner verify",
+   "sha256"
+  ]
+ },
+ "reproducible": {
+  "agp": "8.5.2",
+  "gradle": "8.7 wrapper (or later pinned)",
+  "jdk": "17 (Temurin)",
+  "kotlin": "n/a (Java-first)",
+  "sdk": "compileSdk 34"
+ },
+ "security": {
+  "allow_backup": false,
+  "api_keys": "never hardcoded; user-supplied via Settings, stored encrypted",
+  "exported_components": "only launcher exported",
+  "logging": "no secrets in logs",
+  "tls": "always-on certificate validation"
+ },
+ "spec_checksum_sha256": "e217b37cb7ec0cb5a308fc4bc0bc0ddc934b8e334a92cd89dac29adb3e8e2677",
+ "spec_version": "3.0",
+ "testing": {
+  "api": false,
+  "database": true,
+  "none": false,
+  "ui_smoke": true,
+  "unit": true
+ },
+ "ui": {
+  "min_sdk": 21,
+  "nav": "Single-activity flow with back navigation between screens.",
+  "screens": [
+   "Home",
+   "List"
+  ],
+  "theme": "Material-ish, dark-mode aware (system), system fonts"
+ }
+}

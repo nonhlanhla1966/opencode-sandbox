@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">A plant identification app that takes a photo of a leaf with the camera, identifies the plant species, stores the identification history offline in a local database, and shows care tips for each identified plant</string>
+    <string name="about_title">About</string>
+    <string name="settings_title">Settings</string>
+    <string name="feature_placeholder">Feature detail view.</string>
+</resources>
