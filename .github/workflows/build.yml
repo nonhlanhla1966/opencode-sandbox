@@ -10,6 +10,10 @@ on:
         description: 'Single app slug to build (blank = all)'
         required: false
         type: string
+      cold:
+        description: 'Cold-cache benchmark run (wipe the Gradle cache first)'
+        required: false
+        type: boolean
 
 concurrency:
   group: appfactory-build
@@ -41,6 +45,12 @@ jobs:
       - name: Set up Gradle (cached)
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Prepare cold-cache benchmark
+        if: inputs.cold == 'true'
+        run: |
+          rm -rf "$GRADLE_USER_HOME"
+          echo "cold-cache benchmark: wiped \$GRADLE_USER_HOME so this run builds from empty caches"
+
       - name: Collect app directories
         id: apps
         run: |
@@ -61,6 +71,8 @@ jobs:
           bash tools/fastlane/selftest.sh
 
       - name: Fast Lane build (estimate + compile + tests + gates + security + verify)
+        env:
+          FL_COLD_CACHE: ${{ inputs.cold == 'true' && '1' || '0' }}
         run: |
           bash tools/fastlane/build-all.sh --apps "$APPS" -j 2
 
@@ -89,6 +101,19 @@ jobs:
             echo "APPFACTORY_EOF"
           } >> "$GITHUB_OUTPUT"
           rm -f "$rows_file"
+
+      - name: Persist Fast Lane telemetry
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fastlane-benchmark-${{ github.run_id }}
+          if-no-files-found: ignore
+          retention-days: 90
+          path: |
+            .fastlane/telemetry.json
+            .fastlane/tmp/runs.jsonl
+            .fastlane/tmp/accuracy-*.json
+            .fastlane/tmp/benchmark-*.json
 
       - name: Post DOWNLOAD_READY on requesting issues
         if: always()
