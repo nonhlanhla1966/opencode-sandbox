@@ -180,7 +180,22 @@ corrupt records (broken ms-clock units, one ~1.6e15); those were purged and
 `benchmark.sh compare` rejects them at read time as a second barrier. The
 benchmark engine's correctness is proven in selftest 9.8 with a clean synthetic
 stream (FL1 median 120s, FL2 80s, FL3 median 50s → Speed Score 240.0, corrupt
-records excluded). Live numbers require CI FL1/FL2/FL3-tagged runs (see §32–33).
+records excluded).
+
+Real CI measurements (all on `ubuntu-latest`, 9-app set, `build-all.sh -j 2`,
+warm/cold flights triggered via the `cold` workflow input added in `01e4339`):
+
+| Flight | Run | Batch elapsed | Median per-app | Σ per-app | -j2 utilization |
+|---|---|---|---|---|---|
+| Warm | 35048406981 | 3m 19s | 42s | 372s | 1.87 |
+| Warm | 35050611711 | 3m 25s | 43s | 397s | 1.94 |
+| Warm | 35051626226 | 3m 28s | 44s | 387s | 1.86 |
+| **Cold** | **35051853270** | **4m 17s** | **49s** | **500s** | **1.95** |
+| Incremental (Messenger Pro) | 35051320852 | 28s | 27s | 27s | — |
+
+An earlier "cold" dispatch (35050785234) ran with `FL_COLD_CACHE=0` because a
+boolean workflow input does not equal the string `'true'`; it is excluded here.
+Cold/warm per-app and batch numbers in §20–22 and cache-hit proxy in §23.
 
 ## 19. Fast Lane 1 vs 2 vs 3
 
@@ -196,35 +211,56 @@ records excluded). Live numbers require CI FL1/FL2/FL3-tagged runs (see §32–3
 
 ## 20–22. Cold-cache / warm-cache / incremental performance
 
-**Not yet measurable here.** The authoritative numbers come from CI runner
-telemetry (`FL_COLD_CACHE=1` runs, warm rebuilds, single-module rebuilds). The
-machinery to separate them exists (telemetry tags `cold_cache`, per-app records,
-`complexity`, `generation`), but no clean in-CI sample set has been captured yet.
-Running the numbers before a measured CI run would be fabrication, so none is
-reported.
+Measured on CI (`ubuntu-latest`, 9 apps, `build-all.sh -j 2`):
+
+- **Warm-cache batch** (3 runs: 35048406981/35050611711/35051626226): batch
+  elapsed 3m 19s / 3m 25s / 3m 28s (median 3m 25s); median per-app build
+  42–44s.
+- **Cold-cache batch** (35051853270, `cold=true` wiped `$GRADLE_USER_HOME`
+  after `setup-gradle`, deps downloaded from scratch): batch elapsed 4m 17s
+  (1.25× warm median); median per-app 49s (1.14× warm). The two first-scheduled
+  apps absorbed the dependency/AGP download (82s/83s vs ~40s warm).
+- **Incremental** (35051320852, single warm rebuild of Messenger Pro): batch
+  elapsed 28s, app total 27s vs 43.7s warm-batch average and 63s cold for the
+  same app — 1.6× faster than its warm batch cost, 2.3× faster than cold.
+  (Estimator overshot a single-app run at ~3m 30s vs 28s actual — see
+  telemetry-estimator note.)
+
+Estimate-vs-actual: the 9-app warm banner estimate (~11m 30s, from per-app
+complexity baselines divided across 2 workers) was ≈3.4× the measured 3m 25s;
+the single-app incremental estimate (~3m 30s) was ≈7.5× the 28s actual. The
+estimator is deliberately conservative for progress UX; per-run telemetry
+(fed back through `telemetry.sh estimate`) is what tightens it, so successive
+runs should track closer to reality as the aggregate grows.
 
 ## 23. Cache hit rate
 
-The estimator records cache-effect adjustments (`est_cache_factor` 1.8× cold,
-1.0× warm); a per-run cache-hit ratio is recorded in telemetry once CI runs tag
-it. Current value: **pending CI measurement.**
+No per-task Gradle cache-hit counters are exported from the runner, so a task
+level hit percentage is not claimable. The measured proxy (cold/warm) from real
+flights: cold batch 1.25× warm batch wall time, 1.14× median per-app build; the
+cold download-bearing first builds cost ~2× their warm counterparts (82–83s vs
+~40s). Telemetry tags every run `cold_cache` true/false, so `benchmark.sh`
+can track the cold/warm ratio as more flights accumulate.
 
 ## 24. Parallel worker utilization
 
-`build-all.sh -j 2` on the shared-cache runner; selftest-verified task graph
-independence. Actual utilization numbers come from CI run logs once the next
-batch is built. Current value: **pending CI measurement.**
+`build-all.sh -j 2` on the shared-cache runner. Measured from real runs as
+Σ(per-app build totals) ÷ batch wall time: **1.86–1.94** on warm batches and
+**1.95** on the cold batch — 93–97% of the 2-worker ceiling, so the -j2
+concurrency is effectively saturated and uncontended (the task graph's safe
+parallelism does not serialize workers in practice).
 
 ## 25. Tests passed/failed
 
 - Engine selftest: **75/75 PASS** (34 FL2 baseline + 41 FL3), no SDK required
-  (last run 2026-09-16 on the CI runner, all green).
+  (run in every CI build on 2026-09-16, all green).
 - Pre-FL3 baseline: 34/34 PASS (unchanged, preserved).
-- CI JVM unit tests: the most recent monitored `main` build run (Sep 16,
-  commit `c65172e`) **passed all steps** in 4m 38s — all 10 app workers OK, 0
-  failed gates. The Sep 14/15 runs that failed did so on app JVM tests
-  (chatbot settings/syntax-highlight tests) and FL3 telemetry/security/C012
-  false positives, all resolved by the hardening commits.
+- CI JVM unit tests: every `main` build run since commit `c65172e` **passed all
+  steps** (warm pushes, warm dispatch, cold dispatch, incremental dispatch),
+  all 9 app workers OK, 0 failed gates. The Sep 14/15 runs that failed did so
+  on app JVM tests (chatbot settings/syntax-highlight tests) and FL3
+  telemetry/security/C012 false positives, all resolved by the hardening
+  commits.
 - Local JVM suite: 100 tests OK (exit 0) on a prior check.
 
 ## 26. Quality gates passed / skipped / failed
@@ -255,7 +291,10 @@ run locally; it is CI-only by design.)
 
 `apps/messenger-pro-.../` is a real generated Gradle app (spec_version 3.0,
 C014 coverage 3/3, 100%) with sources, resources, and unit tests committed.
-CI builds and releases it through the same Fast Lane pipeline.
+CI builds and releases it through the same Fast Lane pipeline. Measured builds
+of Messenger Pro: **43.7s** warm-batch average (3 runs), **63s** cold
+(35051853270), **27s** incremental warm single rebuild (35051320852),
+extreme-complexity app, accuracy **100/100**.
 
 ## 30. Golden-app regression results
 
@@ -267,35 +306,46 @@ qualify for C014, which then score 100%).
 ## 31. Accuracy Score
 
 Computed from real artifacts only; missing artifacts lower or neutralize a
-factor rather than inflating it. Measured on the committed app tree **before CI
-build artifacts exist locally** (no APK/tests/gates/coverage on this container):
-scores range **10.0–20.0**, driven by security (1.0 where a scan exists) and
-dependency policy (1.0 where checkable). These are deliberately low and honest —
-they are pre-build evidence. In CI the apk/tests/gates/coverage factors carry
-real signal and the score rises; the breakdown JSON at
-`.fastlane/tmp/accuracy-<slug>.json` itemizes every factor.
+factor rather than inflating it. CI-measured on the full 9-app set (build step
+of every build-all run): **90.0/100 mean** — 3 apps at 100/100 and 6 at 85/100
+per warm and cold batch flight (identical distribution cold vs warm, confirming
+accuracy is artifact-driven, not cache-driven). The incremental Messenger Pro
+rebuild scored **100/100**. Per-app breakdown JSON is preserved in the
+`fastlane-benchmark-*` workflow artifacts (`.fastlane/tmp/accuracy-*.json`).
+This is real post-build evidence, replacing the earlier pre-build-only
+10–20/100 local estimates.
 
 ## 32. Speed Score
 
 `FASTLANE_SPEED_SCORE`: **None** — the FL1 baseline has no retained telemetry,
-so claiming a relative improvement would violate "do not claim unless measured".
-The engine computes the score correctly from valid data (proven at 240.0 in the
-selftest guard); it will report a real value once CI records tagged FL1/FL2/FL3
-runs.
+so claiming a relative improvement vs Fast Lane 1 would violate "do not claim
+unless measured". What *is* now measured from real CI flights is the FL3
+internal speed behaviour: warm 9-app batch 3m 25s, cold 4m 17s (1.25×),
+incremental single-app 28s. The engine computes the score correctly from valid
+data (proven at 240.0 in the selftest guard); it will report a real value only
+if future maintenance runs record FL1-tagged telemetry.
 
 ## 33. Actual percentage improvements
 
-**None claimed.** Improvement percentages are only reported by
-`benchmark.sh` when measured FL1 vs FL3 medians exist. No 10× or any other
-unmeasured speedup is asserted.
+Measured (FL3 internal speeds, not vs a non-existent FL1 baseline):
+
+- Correctly-enforced **cold → warm**: batch 1.25× faster, median per-app
+  1.14× faster; cold download-bearing builds ~2× warm.
+- **Incremental single-app** vs cold single-app (Messenger Pro): **2.3×**.
+- **Incremental single-app** vs warm-batch average (Messenger Pro): **1.6×**.
+- **Parallel -j2 utilization**: 93–97% of the 2-worker ceiling measured on real
+  runs.
+
+No 10× or FL-1-relative speedup is asserted — those numbers do not exist.
 
 ## 34. Remaining limitations
 
 1. **APK-dependent evidence** (gates C002–C010, perf, accuracy's apk factor) is
    only produced in CI; the ARM64 local container cannot host the x86-64 Android
    toolchain.
-2. **No FL1/FL2 legacy telemetry** exists, so the Speed Score stays unmeasured
-   until CI accumulates tagged runs.
+2. **No FL1/FL2 legacy telemetry** exists at all (it was never retained), so a
+   Speed Score vs Fast Lane 1 can never be produced from real data; FL3's own
+   warm/cold/incremental numbers are measured and reported instead.
 3. **C014 contract** only scores apps that carry `architecture.json`; apps
    generated before FL3 cannot be C014-evaluated without a regenerate-and-plan.
 4. **Device/UI dynamic testing** requires a real emulator/device tier; without
