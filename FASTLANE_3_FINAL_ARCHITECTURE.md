@@ -205,54 +205,82 @@ interrupted run picks up where it left off: `pipeline` starts fresh by default
 completed stage instead of re-running every stage. A completed pipeline re-entered
 with `--resume` prints its checkpoint state and stops.
 
-## 21. Assistant Layer (AI Chat + Vision + Imagegen + Web Search + File Understanding + AI→App Builder Bridge)
+## 21. Assistant Layer (AI Chat + Vision/OCR + Imagegen + Web Search + File/Document + Data Analysis + AI→App Builder Bridge)
 
-`tools/assistant/` adds a full conversational AI layer on top of FL3, providing
-chat, vision, image generation, web search, document understanding, and a
-deterministic bridge from AI conversation to the FL3 AppFactory pipeline.
+`tools/assistant/` adds a full conversational AI layer on top of FL3: a
+ChatGPT-like assistant that routes every turn (text + attachments) through a
+complete tool router into chat, vision (incl. OCR and plant/object
+identification), image generation, HTTPS-only web search, safe document
+understanding, deterministic data analysis, app building and app
+modification — and bridges AI conversation directly to the FL3 AppFactory
+pipeline (analyze → spec validate → plan → scaffold → preflight → release).
 
 ### Core Engines (all deterministic in mock/offline mode)
 
 | Module | Purpose |
 |--------|---------|
-| `common.py` | State dirs (`<repo>/.fastlane/assistant/{chat,builds}`), JSON IO, `sanitize_secrets` |
+| `common.py` | State dirs (`<repo>/.fastlane/assistant/{chat,builds,generated}`), JSON IO, `sanitize_secrets` |
 | `transport.py` | `assert_https`, `post_json`, `get_text`, SSE streaming; errors always redacted |
 | `providers.py` | `ProviderRegistry`, `MockProvider`, `BIG_PICKLE_PRESET`; env-mode (mock\|real, CI default mock) |
-| `chat.py` | Conversation CRUD, streaming send, retry, regenerate, edit+resend, stop support |
-| `vision.py` | Image validation, calibrated uncertainty response; never guesses without a provider |
+| `chat.py` | Conversation CRUD, streaming send, retry, regenerate, edit+resend, stop, `context()` API for follow-ups |
+| `vision.py` | Visual Q&A, OCR, plant/object/animal identification — calibrated uncertainty without a provider |
 | `imagegen.py` | Never fabricates success; clean decline without a configured provider |
 | `websearch.py` | HTTPS-only results, `source`-aware, graceful decline without provider |
-| `files.py` | Text extraction, binary rejection, secrets redacted from all output |
+| `files.py` | Text extraction + PDF text-layer + DOCX extraction (stdlib-only), binary/scan rejection, secrets redacted |
+| `data.py` | Deterministic local data analysis (CSV/TSV/JSON/JSONL): stats, counts, correlations, insight; no provider needed |
 | `policy.py` | Deterministic content-policy gate (CSAM/refusal/safety-bypass blocked; 18+ flagged) |
-| `router.py` | Intent router — CHAT/VISION/WEB/IMAGE_GENERATION/FILE_ANALYSIS/APP_BUILDER |
+| `router.py` | Complete AI Tool Router — CHAT/VISION/WEB/IMAGE/FILE/DATA/APP_BUILDER/APP_MODIFIER + contextual follow-ups |
+| `session.py` | ChatGPT-like orchestrator — routes one turn through the tools and appends a structured assistant reply |
 | `builder.py` | AI→AppFactory bridge — `analyze.py` → `plan.py` → `scaffold.py` via `_run()` |
 | `assistant.py` | Single CLI entrypoint for all subcommands |
+
+### AI Tool Router (complete set)
+
+| Capability | Intent | Router trigger(s) |
+|------------|--------|-------------------|
+| `CHAT` | conversation / contextual follow-up | default; detected follow-ups get `contextual: true` |
+| `VISION` | image Q&A, OCR, plant/object ID | image attachment, `what plant is this`, `identify`, `ocr` |
+| `WEB` | HTTPS-only web search | `search the web`, `latest news`, `weather`, `today` |
+| `IMAGE` | image generation | `generate an image`, `make a logo`, `draw` |
+| `FILE` | document understanding | file attachment, `summarize this file/pdf` |
+| `DATA` | data analysis | csv/tsv/json attachment, `analyze the data`, `average`, `statistics` |
+| `APP_BUILDER` | build a new app | `build me an app`, `create an app`, `generate an app` |
+| `APP_MODIFIER` | extend an existing app | `add a … to my app`, `improve/update/modify my app` |
 
 ### AI→App Factory Bridge (`builder.py`)
 
 - **Create**: `build_app(idea, staging=<staging>)` runs analyze+plan+scaffold,
-  writes `app-spec.json` with `checksum_sha256`, records `history.jsonl`,
-  isolates staging from real `apps/`.
+  writes `app-spec.json` with `checksum_sha256` (spec_version 3.0), records
+  `history.jsonl`, isolates staging from real `apps/`.
 - **Modify**: `build_app(idea, modify=<slug>, staging=<staging>)` loads the
   existing spec, merges features/screens/modules, records changes, re-emits
   a new spec+checksum.
+- **Full pipeline**: the generated app is validated locally (spec_validate +
+  preflight + validate-app checks) and then committed + released through the
+  AppFactory CI: Fast Lane 3 builds, tests, secures, verifies and publishes
+  the APK (`gh workflow run build.yml -f app=<slug>`).
 - **Cloud Release**: optional `_trigger_cloud_release(slug)` dispatches
-  `build.yml` via `gh workflow run` when `GIT_REMOTE` + `GH_TOKEN` are set.
+  `build.yml` when a service backend exists.
 
 ### Golden Rules Preserved
 
-- **Never fake capabilities**: mock mode emits explicit `MOCK_CHAT:`
-  prefix; vision returns calibrated uncertainty; imagegen never writes a file.
+- **Never fake capabilities**: mock mode emits explicit `MOCK_CHAT:` prefix;
+  vision returns calibrated uncertainty; imagegen never writes a file; OCR
+  reads 0 characters rather than inventing them; scanned PDFs are reported as
+  needing OCR.
 - **No secrets in output**: `sanitize_secrets` redacts Bearer/sk-/ghp_/AKIA
-  patterns; transport errors are sanitized.
+  patterns; transport errors are sanitized before they leave any boundary.
 - **HTTPS-only**: `assert_https` rejects `http://` endpoints.
 - **Never modify real `apps/` in staging**: staging dir isolates all
   intermediate artifacts.
 - **CI=mock**: `CI=true` forces mock mode automatically.
+- **C001–C014 gates preserved**: the Fast Lane gates are never weakened; the
+  assistant only ever hands build/release work to the gated pipeline.
 
 ### Verification
 
-`python3 tools/assistant/assistantselftest.py` — **78/78 PASS**:
+`python3 tools/assistant/assistantselftest.py` — **141/141 PASS** (all 78
+baseline tests preserved and extended to 141):
 
 - §1–2: Provider config, transport, redaction
 - §3: Chat CRUD, deterministic mock, retry/regenerate/edit, stop support
@@ -261,6 +289,12 @@ deterministic bridge from AI conversation to the FL3 AppFactory pipeline.
 - §8–9: Router correctness, content policy gate
 - §10: Builder create/modify, staging isolation, history+checksum
 - §11: Models endpoint mock safety
+- §12: Data analysis (CSV/JSONL stats, correlation, insight, errors)
+- §13: PDF text-layer + scanned-PDF honesty + DOCX extraction + redaction
+- §14: Vision OCR + plant/object identification (calibrated)
+- §15: Router DATA/APP_MODIFIER/contextual follow-ups
+- §16: Chat context API
+- §17: Session orchestrator (data/vision/web/builder/policy end-to-end)
 
 ---
 

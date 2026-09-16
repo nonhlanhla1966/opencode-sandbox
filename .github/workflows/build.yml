@@ -3,7 +3,7 @@ name: appfactory-build
 on:
   push:
     branches: [main]
-    paths: ['apps/**', 'scripts/**', 'tools/fastlane/**', 'modules/**', 'modules/DEPENDENCY_REGISTRY.json', '.github/workflows/build.yml']
+    paths: ['apps/**', 'scripts/**', 'tools/fastlane/**', 'tools/assistant/**', 'modules/**', 'modules/DEPENDENCY_REGISTRY.json', '.github/workflows/build.yml']
   workflow_dispatch:
     inputs:
       app:

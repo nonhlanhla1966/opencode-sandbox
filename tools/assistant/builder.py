@@ -53,7 +53,8 @@ def plan_spec(spec: dict, outdir: Path, outfile: str = "architecture.json") -> d
     return arch
 
 
-def scaffold_app(spec: dict, arch: dict, parent_dir: Path) -> Path:
+def scaffold_app(spec: dict, arch: dict, parent_dir) -> Path:
+    parent_dir = Path(parent_dir)
     spec_path = parent_dir / "spec.json"
     spec_path.write_text(json.dumps(spec, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     arch_path = parent_dir / "architecture.json"
@@ -134,6 +135,8 @@ def build_app(
     workroot = Path(staging) if staging else BUILD_DIR / slug
     run_dir = workroot / f"run-{len(list(workroot.glob('run-*')))}"
     run_dir.mkdir(parents=True, exist_ok=True)
+    if staging:
+        staging = Path(staging)
 
     # deterministic spec artifact
     spec_path = run_dir / "app-spec.json"

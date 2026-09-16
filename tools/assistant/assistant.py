@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""assistant.py — AppFactory Assistant CLI (AI chat + vision + imagegen + web
-search + file understanding + AI->App builder).
+"""assistant.py — AppFactory Assistant CLI (AI chat + vision/OCR + imagegen +
+web search + file/document + data analysis + AI->App builder + sessions).
 
 Fast Lane conventions: deterministic CLIs, JSON on stdout, human notes on
 stderr, the user's API key only ever in the environment, HTTPS/TLS only, and
@@ -8,15 +8,19 @@ never-fake rules for unconfigured capabilities.
 
 Usage:
   assistant.py providers list|init|test [id]|models [id]
-  assistant.py chat new|list|get|rename|delete|clear
+  assistant.py chat new|list|get|rename|delete|clear|context
   assistant.py chat send <id> --text "..." [--image p] [--file p] [--stream]
   assistant.py chat retry|regenerate <id>
   assistant.py chat edit <id> <msg-index> --text "..."
   assistant.py route <text> [--attach a,b]
-  assistant.py vision <image> [--question "..."]
+  assistant.py vision <image> [--question "..."]           (visual Q&A / description)
+  assistant.py vision ocr <image>
+  assistant.py vision identify <image> [--kind plant|object|animal|auto]
   assistant.py imagegen <prompt> --out out.png [--size 1024x1024]
   assistant.py web <query> [--limit n]
   assistant.py files extract <path>
+  assistant.py data analyze <path> [--question "..."]
+  assistant.py session <conversation-id> <text> [--image p] [--file p]
   assistant.py build <idea> [--modify <slug>] [--release] [--staging <dir>]
   assistant.py policy <text>
   assistant.py models [provider-id]
@@ -32,11 +36,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import builder  # noqa: E402
 import chat as chatmod  # noqa: E402
+import data  # noqa: E402
 import files  # noqa: E402
 import imagegen  # noqa: E402
 import policy  # noqa: E402
 import providers  # noqa: E402
 import router  # noqa: E402
+import session  # noqa: E402
 import vision  # noqa: E402
 import websearch  # noqa: E402
 from common import out, read_json, sanitize_secrets  # noqa: E402
@@ -144,6 +150,9 @@ def _chat(args) -> None:
             out({"ok": False, "command": "chat clear", "error": f"unknown conversation: {args.conversation_id}"})
             return
         out({"ok": True, "command": "chat clear", "conversation_id": conv.id, "messages": 0})
+    elif sub == "context":
+        ctx = engine.context(args.conversation_id, turns=args.turns)
+        out(ctx)
     elif sub == "send":
         guard = _guard(args.text, "chat send")
         if guard:
@@ -193,7 +202,12 @@ def _route(args) -> None:
 
 # ---- vision ----------------------------------------------------------------
 def _vision(args) -> None:
-    out(vision.describe(_registry(), args.image, args.question))
+    if getattr(args, "ocr", False):
+        out(vision.ocr(_registry(), args.image))
+    elif getattr(args, "identify", False):
+        out(vision.identify(_registry(), args.image, args.kind))
+    else:
+        out(vision.describe(_registry(), args.image, args.question))
 
 
 # ---- imagegen --------------------------------------------------------------
@@ -212,6 +226,29 @@ def _files(args) -> None:
         out(files.extract(args.path))
     else:
         out({"ok": False, "error": f"unknown files subcommand: {args.file_sub}"})
+
+
+# ---- data ------------------------------------------------------------------
+def _data(args) -> None:
+    if args.data_sub == "analyze":
+        out(data.analyze_data(args.path, method=args.method, question=args.question))
+    else:
+        out({"ok": False, "error": f"unknown data subcommand: {args.data_sub}"})
+
+
+# ---- session ---------------------------------------------------------------
+def _session(args) -> None:
+    guard = _guard(args.text, "session")
+    if guard:
+        return
+    attachments = []
+    if args.image:
+        attachments.append({"type": "image", "path": args.image})
+    if args.file:
+        ext = Path(args.file).suffix.lower()
+        attachments.append({"type": "data" if ext in (".csv", ".tsv", ".json", ".jsonl") else "file", "path": args.file})
+    engine = chatmod.ChatEngine(_registry())
+    out(session.run(engine, args.conversation_id, args.text, attachments))
 
 
 # ---- build -----------------------------------------------------------------
@@ -248,6 +285,9 @@ def main(argv: list[str] | None = None) -> int:
     cd.add_argument("conversation_id")
     ccl = csub.add_parser("clear")
     ccl.add_argument("conversation_id")
+    cctx = csub.add_parser("context")
+    cctx.add_argument("conversation_id")
+    cctx.add_argument("--turns", type=int, default=8)
     cs = csub.add_parser("send")
     cs.add_argument("conversation_id")
     cs.add_argument("--text", required=True)
@@ -274,6 +314,9 @@ def main(argv: list[str] | None = None) -> int:
     vs = subs.add_parser("vision")
     vs.add_argument("image")
     vs.add_argument("--question")
+    vs.add_argument("--ocr", action="store_true")
+    vs.add_argument("--identify", action="store_true")
+    vs.add_argument("--kind", default="auto")
     vs.set_defaults(fn=_vision)
 
     ig = subs.add_parser("imagegen")
@@ -291,6 +334,21 @@ def main(argv: list[str] | None = None) -> int:
     fs.add_argument("file_sub", choices=["extract"])
     fs.add_argument("path")
     fs.set_defaults(fn=_files)
+
+    ds = subs.add_parser("data")
+    dsub = ds.add_subparsers(dest="data_sub", required=True)
+    da = dsub.add_parser("analyze")
+    da.add_argument("path")
+    da.add_argument("--method", default="auto")
+    da.add_argument("--question")
+    ds.set_defaults(fn=_data)
+
+    ss = subs.add_parser("session")
+    ss.add_argument("conversation_id")
+    ss.add_argument("text")
+    ss.add_argument("--image")
+    ss.add_argument("--file")
+    ss.set_defaults(fn=_session)
 
     bd = subs.add_parser("build")
     bd.add_argument("idea")

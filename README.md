@@ -51,7 +51,7 @@ CLIs; it never hand-writes specs or scaffolds by hand.
 | `deps.sh` + `modules/DEPENDENCY_REGISTRY.json` | Dependency allowlist + known-vulnerable table |
 | `perf.sh` | APK size / method-count heuristics |
 | `regression.sh` | Regression lab over the protected apps |
-| `selftest.sh` | No-SDK engine self-tests (currently 67/67 pass — FL2 baseline + FL3 engines) |
+| `selftest.sh` | No-SDK engine self-tests (75/75 pass — FL2 baseline + FL3 engines) |
 
 ### Fast Lane 3.0 engines (layered on the FL2 engine)
 
@@ -167,9 +167,38 @@ the Knowledge/Cache + device/UI engines (honest `SKIP` w/ reason), Accuracy and
 Speed scores, gates C011–C014, and an end-to-end orchestrator. Full document:
 `FASTLANE_3_FINAL_ARCHITECTURE.md`.
 
+### AppFactory AI Assistant (app layer on top of Fast Lane 3)
+
+A ChatGPT-like conversational AI assistant lives in `tools/assistant/`. It routes
+every turn (text + attachments) through a complete 8-capability tool router
+and bridges AI conversation directly into the FL3 AppFactory pipeline.
+
+| Capability | What it does |
+|------------|--------------|
+| `CHAT`     | Persistent contextual conversations with follow-up detection |
+| `VISION`   | Image Q&A, OCR, plant/object/animal identification (calibrated) |
+| `WEB`      | HTTPS-only web search with source-aware results |
+| `IMAGE`    | Image generation (provider-dependent, never fakes) |
+| `FILE`     | PDF text-layer, DOCX, code and text extraction with redaction |
+| `DATA`     | Deterministic CSV/JSON/TSV analysis: stats, correlations, insight |
+| `APP_BUILDER` | AI-to-AppFactory bridge: idea → spec → FL3 scaffold → CI release |
+| `APP_MODIFIER` | Extend an existing app with new features through the pipeline |
+
+**CLI entry point:** `python3 tools/assistant/assistant.py`
+
+```
+python3 tools/assistant/assistant.py route "Analyze my harvest data" --file harvest.csv
+python3 tools/assistant/assistant.py data analyze harvest.csv --question "average yield?"
+python3 tools/assistant/assistant.py vision ocr photo.png
+python3 tools/assistant/assistant.py session <conv-id> "Build me a plant ID app"
+```
+
+**Selftest:** `python3 tools/assistant/assistantselftest.py` → **141/141 PASS** (no
+network, no credentials; deterministic mock provider).
+
 ```
 bash tools/fastlane/fastlane.sh full3 "<one-line idea>"   # checkpointed FL3 pipeline
-bash tools/fastlane/selftest.sh                            # 67 no-SDK engine tests
+bash tools/fastlane/selftest.sh                            # 75 no-SDK engine tests
 bash tools/fastlane/accuracy.py score apps/<slug>          # Accuracy Score from real artifacts
 bash tools/fastlane/benchmark.sh report                    # Speed Score: FL1 vs FL2 vs FL3
 ```

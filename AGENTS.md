@@ -38,11 +38,60 @@ FL3 is layered on top of FL2. Use these extra engines when relevant:
 - Preflight before local validation: `python3 tools/fastlane/preflight.py check
   apps/<slug>` (finds package/manifest/resource/duplicate faults without SDK).
 - Checkpoint progress per app: `bash tools/fastlane/checkpoint.sh save <slug>
-  <stage> <file>` so a retried run resumes, not restarts.
+  <stage> <file>` so a retried run resumes, not restart.
 - Device/UI gates (C011/C012): on a runner with no emulator they MUST report
   `SKIP` with a reason, never a silent pass.
 - See `FASTLANE_3_FINAL_ARCHITECTURE.md` for the full subsystem map; run
-  `bash tools/fastlane/selftest.sh` (73 tests) to verify the engine.
+  `bash tools/fastlane/selftest.sh` (75 tests) to verify the engine.
+
+### AppFactory AI Assistant
+
+The assistant layer (`tools/assistant/`) provides a ChatGPT-like experience
+routed through the deterministic Fast Lane engine. It supports eight
+capabilities:
+
+| Capability | What it does | CLI command |
+|---|---|---|
+| CHAT | Persistent multi-turn conversation | `assistant chat <text>` |
+| VISION | Image description, OCR, plant/object ID | `assistant vision <img>` |
+| WEB | HTTPS web search with real sources | `assistant web <query>` |
+| IMAGE | Image generation | `assistant image <prompt>` |
+| FILE | Document understanding (txt/pdf/docx) | `assistant files <path>` |
+| DATA | Deterministic CSV/TSV/JSON data analysis | `assistant data analyze <path>` |
+| APP_BUILDER | Bridge to Fast Lane 3 scaffold pipeline | `assistant session <cid> <idea>` |
+| APP_MODIFIER | Add features to an existing app | routed automatically by router |
+
+Key modules:
+- `router.py`: classifies user intent into capabilities; detects follow-ups.
+- `session.py`: orchestrates a full turn: policy gate → dispatch → persist → render.
+- `data.py`: offline data analysis (stats, correlations, summaries).
+- `vision.py`: describe/OCR/identify with calibrated uncertainty.
+- `files.py`: text+PDF+DOCX extraction with secret redaction.
+- `chat.py`: conversation storage, search, context API.
+- `builder.py`: AI-to-AppFactory bridge (analyze → plan → scaffold → testgen).
+
+Run the full assistant selftest:
+```
+python3 tools/assistant/assistantselftest.py
+```
+(141 tests covering all eight capabilities, mock-only, deterministic.)
+
+### Generated apps
+
+| App | slug | What it does |
+|---|---|---|
+| Plant ID | `a-plant-identification-app-...` | Camera leaf photo, offline history, care tips |
+| Notes | `notes-app` | Encrypted offline note storage |
+| Messenger | `messenger-pro-...` | Encrypted messaging with groups and status |
+| Habit Tracker | `daily-habit-tracker-...` | Streak-based habit logging |
+| Chatbot | `opencode-chatbot` | AI chatbot interface |
+| Hello World | `a-one-button-hello-world-app` | Single-button greeting |
+| Tip Calculator | `tip-calculator` | Bill splitting and tip calculation |
+| Flashlight | `flashlight` | Toggle device flashlight |
+| Hello | `hello-appfactory` | Minimal starter app |
+
+Generated apps are never modified in-place; modifications append via
+the APP_MODIFIER router path and are versioned through FL3 run history.
 
 ## Pipeline per request
 
@@ -134,12 +183,17 @@ Python 3, and the Fast Lane engine under `tools/fastlane/`
 Fast Lane 3.0 engines: `spec_validate.py`, `compat.py`, `taskgraph.py`,
 `preflight.py`, `checkpoint.sh`, `knowledge.sh`, `device.sh`, `ui-validate.sh`,
 `accuracy.py`, `benchmark.sh`, `fastlane3.sh`.
+AI Assistant: `tools/assistant/assistant.py` (CLI entrypoint),
+`tools/assistant/data.py` (data analysis), `tools/assistant/session.py`
+(session orchestrator), `tools/assistant/router.py` (intent routing).
 
 ## Definition of done
 - `apps/<slug>/` scaffolded by the engine (spec, architecture, DESIGN.md,
   PLAN.md present; wrapper committed).
-- `validate-app.sh` passes; unit tests pass; generated tests included.
+- `validate-app.sh` passes; `preflight.py check` passes; unit tests pass;
+  generated tests included.
 - `release.json` written with issue number and request.
+- Assistant selftest 141/141 PASS; FL selftest 75/75 PASS.
 - Committed and pushed to `main`.
 - CI dispatched via `gh workflow run build.yml -f app=<slug>` and confirmed
   running.

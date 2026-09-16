@@ -141,6 +141,41 @@ class ChatEngine:
         conv.save()
         return conv
 
+    def context(self, conv_id: str, turns: int = 8) -> dict:
+        """Return the recent conversation context for contextual follow-ups.
+
+        Deterministic: the last `turns` user/assistant messages plus metadata
+        so a follow-up ('and the second one?') can be resolved against history.
+        """
+        conv = self.get(conv_id)
+        if conv is None:
+            return {"ok": False, "error": f"unknown conversation: {conv_id}"}
+        msgs = conv.messages
+        last = msgs[-(turns * 2):] if turns * 2 > 0 else []
+        flatten = []
+        for m in last:
+            content = m.get("content", "")
+            if isinstance(content, list):
+                content = " ".join(str(p.get("text", "")) for p in content if isinstance(p, dict))
+            flatten.append(
+                {
+                    "role": m.get("role", ""),
+                    "content": sanitize_secrets(content)[:2000],
+                    "ts": m.get("ts", ""),
+                    "status": m.get("status", ""),
+                }
+            )
+        return {
+            "ok": True,
+            "conversation_id": conv_id,
+            "title": conv.title,
+            "messages": len(msgs),
+            "context_turns": len(flatten),
+            "recent": flatten,
+            "created_at": conv.data.get("created_at", ""),
+            "updated_at": conv.data.get("updated_at", ""),
+        }
+
     @staticmethod
     def _content_messages(conv: Conversation) -> list[dict]:
         out_messages = []
