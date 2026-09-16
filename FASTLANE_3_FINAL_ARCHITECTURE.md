@@ -205,6 +205,63 @@ interrupted run picks up where it left off: `pipeline` starts fresh by default
 completed stage instead of re-running every stage. A completed pipeline re-entered
 with `--resume` prints its checkpoint state and stops.
 
+## 21. Assistant Layer (AI Chat + Vision + Imagegen + Web Search + File Understanding + AI→App Builder Bridge)
+
+`tools/assistant/` adds a full conversational AI layer on top of FL3, providing
+chat, vision, image generation, web search, document understanding, and a
+deterministic bridge from AI conversation to the FL3 AppFactory pipeline.
+
+### Core Engines (all deterministic in mock/offline mode)
+
+| Module | Purpose |
+|--------|---------|
+| `common.py` | State dirs (`<repo>/.fastlane/assistant/{chat,builds}`), JSON IO, `sanitize_secrets` |
+| `transport.py` | `assert_https`, `post_json`, `get_text`, SSE streaming; errors always redacted |
+| `providers.py` | `ProviderRegistry`, `MockProvider`, `BIG_PICKLE_PRESET`; env-mode (mock\|real, CI default mock) |
+| `chat.py` | Conversation CRUD, streaming send, retry, regenerate, edit+resend, stop support |
+| `vision.py` | Image validation, calibrated uncertainty response; never guesses without a provider |
+| `imagegen.py` | Never fabricates success; clean decline without a configured provider |
+| `websearch.py` | HTTPS-only results, `source`-aware, graceful decline without provider |
+| `files.py` | Text extraction, binary rejection, secrets redacted from all output |
+| `policy.py` | Deterministic content-policy gate (CSAM/refusal/safety-bypass blocked; 18+ flagged) |
+| `router.py` | Intent router — CHAT/VISION/WEB/IMAGE_GENERATION/FILE_ANALYSIS/APP_BUILDER |
+| `builder.py` | AI→AppFactory bridge — `analyze.py` → `plan.py` → `scaffold.py` via `_run()` |
+| `assistant.py` | Single CLI entrypoint for all subcommands |
+
+### AI→App Factory Bridge (`builder.py`)
+
+- **Create**: `build_app(idea, staging=<staging>)` runs analyze+plan+scaffold,
+  writes `app-spec.json` with `checksum_sha256`, records `history.jsonl`,
+  isolates staging from real `apps/`.
+- **Modify**: `build_app(idea, modify=<slug>, staging=<staging>)` loads the
+  existing spec, merges features/screens/modules, records changes, re-emits
+  a new spec+checksum.
+- **Cloud Release**: optional `_trigger_cloud_release(slug)` dispatches
+  `build.yml` via `gh workflow run` when `GIT_REMOTE` + `GH_TOKEN` are set.
+
+### Golden Rules Preserved
+
+- **Never fake capabilities**: mock mode emits explicit `MOCK_CHAT:`
+  prefix; vision returns calibrated uncertainty; imagegen never writes a file.
+- **No secrets in output**: `sanitize_secrets` redacts Bearer/sk-/ghp_/AKIA
+  patterns; transport errors are sanitized.
+- **HTTPS-only**: `assert_https` rejects `http://` endpoints.
+- **Never modify real `apps/` in staging**: staging dir isolates all
+  intermediate artifacts.
+- **CI=mock**: `CI=true` forces mock mode automatically.
+
+### Verification
+
+`python3 tools/assistant/assistantselftest.py` — **78/78 PASS**:
+
+- §1–2: Provider config, transport, redaction
+- §3: Chat CRUD, deterministic mock, retry/regenerate/edit, stop support
+- §4–5: Vision uncertainty, imagegen never-fake
+- §6–7: Web search source-aware, file extraction+redaction
+- §8–9: Router correctness, content policy gate
+- §10: Builder create/modify, staging isolation, history+checksum
+- §11: Models endpoint mock safety
+
 ---
 
 ## Orchestrator
@@ -221,11 +278,14 @@ status <slug>        → checkpoint + next-stage view
 
 ## Verification
 
-- `bash tools/fastlane/selftest.sh` → **73/73 PASS** (FL2 34 + FL3 39), covering
+- `bash tools/fastlane/selftest.sh` → **75/75 PASS**, covering
   every FL3 engine, the honest device `SKIP`, the honest UI **`SKIP`** when the
   dynamic smoke check has no device, the C014 spec-coverage contract on a clean
   scaffold, the benchmark's corrupt-telemetry guard, registry/compat/taskgraph/
   preflight correctness, checkpoint `--resume`, and the orchestrator pipeline.
+- `python3 tools/assistant/assistantselftest.py` → **78/78 PASS**:
+  provider/transport, chat CRUD+controls, vision/imagegen/web/files,
+  router+policy, builder create/modify, models safety.
 - CI `.github/workflows/build.yml` runs selftest + `build-all.sh` (apps rebuild
   with the shared Gradle/SDK cache → the live benchmark sample set).
 - Fast Lane golden rules preserved: no secrets, real APKs only, deterministic

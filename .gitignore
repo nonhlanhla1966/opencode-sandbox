@@ -17,4 +17,5 @@ apps/*/build/
 .fastlane/tmp/
 .fastlane/checkpoints/
 .fastlane/knowledge/
-*.telemetry.run.json
+.fastlane/assistant/
+*.telemetry.run.json__pycache__/
